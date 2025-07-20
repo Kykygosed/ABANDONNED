@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <title>Mini Minecraft ES Modules</title>
+  <meta charset="UTF-8">
+  <title>Mini Minecraft - GitHub Pages OK</title>
   <style>
     body {
       margin: 0;
@@ -16,7 +16,7 @@
       transform: translate(-50%, -50%);
       font-size: 24px;
       color: white;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0, 0, 0, 0.6);
       padding: 20px;
       border-radius: 10px;
       cursor: pointer;
@@ -28,7 +28,7 @@
       left: 50%;
       width: 10px;
       height: 10px;
-      background-color: black;
+      background: black;
       transform: translate(-50%, -50%);
       z-index: 9;
     }
@@ -39,7 +39,7 @@
   <canvas id="game"></canvas>
   <div class="crosshair"></div>
 
-  <!-- Module JS -->
+  <!-- Utilise un type module + CDN -->
   <script type="module">
     import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
     import { PointerLockControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
@@ -50,7 +50,6 @@
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game') });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    document.body.appendChild(renderer.domElement);
 
     const controls = new PointerLockControls(camera, renderer.domElement);
     scene.add(controls.getObject());
@@ -102,7 +101,6 @@
 
     document.body.addEventListener('mousedown', (event) => {
       if (!controls.isLocked) return;
-
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
       const intersects = raycaster.intersectObjects(blocks);
 
