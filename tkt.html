@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mini Minecraft - One File</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background-color: #87ceeb;
+    }
+    #instructions {
+      position: absolute;
+      top: 50%;
+      width: 100%;
+      text-align: center;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+      z-index: 10;
+    }
+    canvas {
+      display: block;
+    }
+    .crosshair {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 10px;
+      height: 10px;
+      background-color: black;
+      transform: translate(-50%, -50%);
+      z-index: 9;
+    }
+  </style>
+</head>
+<body>
+  <div id="instructions">Clique pour commencer</div>
+  <canvas id="game"></canvas>
+  <div class="crosshair"></div>
+  <script type="module">
+    import * as THREE from 'https://cdn.skypack.dev/three@0.158.0';
+    import { PointerLockControls } from 'https://cdn.skypack.dev/three/examples/jsm/controls/PointerLockControls.js';
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87ceeb);
+
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game') });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Lumière
+    const light = new THREE.HemisphereLight(0xffffff, 0x444444);
+    light.position.set(0, 200, 0);
+    scene.add(light);
+
+    // Contrôles
+    const controls = new PointerLockControls(camera, renderer.domElement);
+    document.getElementById('instructions').addEventListener('click', () => controls.lock());
+    controls.addEventListener('lock', () => {
+      document.getElementById('instructions').style.display = 'none';
+    });
+    controls.addEventListener('unlock', () => {
+      document.getElementById('instructions').style.display = '';
+    });
+    scene.add(controls.getObject());
+
+    // Mouvement
+    const keys = {};
+    document.addEventListener('keydown', e => keys[e.code] = true);
+    document.addEventListener('keyup', e => keys[e.code] = false);
+
+    function movePlayer(delta) {
+      const speed = 5;
+      const direction = new THREE.Vector3();
+      if (keys['KeyW']) direction.z -= 1;
+      if (keys['KeyS']) direction.z += 1;
+      if (keys['KeyA']) direction.x -= 1;
+      if (keys['KeyD']) direction.x += 1;
+      direction.normalize();
+      direction.applyEuler(camera.rotation);
+      controls.getObject().position.addScaledVector(direction, speed * delta);
+    }
+
+    // Sol
+    const blockSize = 1;
+    const groundSize = 20;
+    const blocks = [];
+
+    const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+    const material = new THREE.MeshLambertMaterial({ color: 0x55aa55 });
+
+    for (let x = -groundSize/2; x < groundSize/2; x++) {
+      for (let z = -groundSize/2; z < groundSize/2; z++) {
+        const block = new THREE.Mesh(geometry, material.clone());
+        block.position.set(x, 0, z);
+        scene.add(block);
+        blocks.push(block);
+      }
+    }
+
+    // Raycast souris
+    const raycaster = new THREE.Raycaster();
+
+    document.body.addEventListener('mousedown', (event) => {
+      if (!controls.isLocked) return;
+
+      raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
+      const intersects = raycaster.intersectObjects(blocks);
+
+      if (intersects.length > 0) {
+        const hit = intersects[0];
+        const normal = hit.face.normal.clone();
+        const pos = hit.object.position.clone();
+
+        if (event.button === 0) {
+          // Supprimer bloc
+          scene.remove(hit.object);
+          blocks.splice(blocks.indexOf(hit.object), 1);
+        } else if (event.button === 2) {
+          // Ajouter bloc
+          const newBlock = new THREE.Mesh(geometry, material.clone());
+          newBlock.position.copy(pos).add(normal);
+          scene.add(newBlock);
+          blocks.push(newBlock);
+        }
+      }
+    });
+
+    // Boucle de rendu
+    const clock = new THREE.Clock();
+    function animate() {
+      requestAnimationFrame(animate);
+      const delta = clock.getDelta();
+      movePlayer(delta);
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    // Resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // Empêcher menu contextuel (clic droit)
+    window.addEventListener('contextmenu', e => e.preventDefault());
+  </script>
+</body>
+</html>
