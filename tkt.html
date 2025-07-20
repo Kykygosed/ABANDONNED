@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Mini Minecraft - GitHub Pages OK</title>
+  <meta charset="UTF-8" />
+  <title>Mini Minecraft 3D</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
       background-color: #87ceeb;
     }
+
     #instructions {
       position: absolute;
       top: 50%;
@@ -22,6 +23,7 @@
       cursor: pointer;
       z-index: 10;
     }
+
     .crosshair {
       position: absolute;
       top: 50%;
@@ -39,15 +41,14 @@
   <canvas id="game"></canvas>
   <div class="crosshair"></div>
 
-  <!-- Utilise un type module + CDN -->
   <script type="module">
     import * as THREE from 'https://unpkg.com/three@0.158.0/build/three.module.js';
     import { PointerLockControls } from 'https://unpkg.com/three@0.158.0/examples/jsm/controls/PointerLockControls.js';
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game') });
     renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -64,7 +65,7 @@
     light.position.set(0, 200, 0);
     scene.add(light);
 
-    // Mouvement
+    // Mouvement clavier
     const keys = {};
     document.addEventListener('keydown', e => keys[e.code] = true);
     document.addEventListener('keyup', e => keys[e.code] = false);
@@ -122,6 +123,7 @@
     });
 
     const clock = new THREE.Clock();
+
     function animate() {
       requestAnimationFrame(animate);
       movePlayer(clock.getDelta());
