@@ -2,26 +2,25 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Mini Minecraft - One File</title>
+  <title>Mini Minecraft - GitHub Pages OK</title>
   <style>
     body {
       margin: 0;
       overflow: hidden;
-      font-family: sans-serif;
-      background-color: #87ceeb;
+      background: #87ceeb;
     }
     #instructions {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 24px;
-      color: white;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0, 0, 0, 0.6);
       padding: 20px;
-      border-radius: 10px;
-      z-index: 10;
+      border-radius: 8px;
+      color: white;
+      font-family: sans-serif;
       cursor: pointer;
+      z-index: 10;
     }
     .crosshair {
       position: absolute;
@@ -29,7 +28,7 @@
       left: 50%;
       width: 10px;
       height: 10px;
-      background-color: black;
+      background: black;
       transform: translate(-50%, -50%);
       z-index: 9;
     }
@@ -39,18 +38,22 @@
   <div id="instructions">Clique pour commencer</div>
   <canvas id="game"></canvas>
   <div class="crosshair"></div>
-  <script type="module">
-    import * as THREE from 'https://cdn.skypack.dev/three@0.158.0';
-    import { PointerLockControls } from 'https://cdn.skypack.dev/three/examples/jsm/controls/PointerLockControls.js';
 
+  <!-- Three.js -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
+  <!-- PointerLockControls -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/PointerLockControls.min.js"></script>
+
+  <script>
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x87ceeb);
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
 
     const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game') });
     renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
 
-    const controls = new PointerLockControls(camera, renderer.domElement);
+    const controls = new THREE.PointerLockControls(camera, renderer.domElement);
     scene.add(controls.getObject());
 
     const instructions = document.getElementById('instructions');
@@ -78,27 +81,26 @@
 
     function movePlayer(delta) {
       const speed = 5;
-      const direction = new THREE.Vector3();
-      if (keys['KeyW']) direction.z -= 1;
-      if (keys['KeyS']) direction.z += 1;
-      if (keys['KeyA']) direction.x -= 1;
-      if (keys['KeyD']) direction.x += 1;
-      direction.normalize();
-      direction.applyEuler(camera.rotation);
-      controls.getObject().position.addScaledVector(direction, speed * delta);
+      const dir = new THREE.Vector3();
+      if (keys['KeyW']) dir.z -= 1;
+      if (keys['KeyS']) dir.z += 1;
+      if (keys['KeyA']) dir.x -= 1;
+      if (keys['KeyD']) dir.x += 1;
+      dir.normalize();
+      dir.applyEuler(camera.rotation);
+      controls.getObject().position.addScaledVector(dir, speed * delta);
     }
 
-    // Sol de blocs
+    // Blocs
     const blockSize = 1;
     const groundSize = 20;
     const blocks = [];
-
-    const geometry = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
-    const material = new THREE.MeshLambertMaterial({ color: 0x55aa55 });
+    const boxGeo = new THREE.BoxGeometry(blockSize, blockSize, blockSize);
+    const boxMat = new THREE.MeshLambertMaterial({ color: 0x55aa55 });
 
     for (let x = -groundSize / 2; x < groundSize / 2; x++) {
       for (let z = -groundSize / 2; z < groundSize / 2; z++) {
-        const block = new THREE.Mesh(geometry, material.clone());
+        const block = new THREE.Mesh(boxGeo, boxMat.clone());
         block.position.set(x, 0, z);
         scene.add(block);
         blocks.push(block);
@@ -110,7 +112,6 @@
 
     document.body.addEventListener('mousedown', (event) => {
       if (!controls.isLocked) return;
-
       raycaster.setFromCamera(new THREE.Vector2(0, 0), camera);
       const intersects = raycaster.intersectObjects(blocks);
 
@@ -123,7 +124,7 @@
           scene.remove(hit.object);
           blocks.splice(blocks.indexOf(hit.object), 1);
         } else if (event.button === 2) {
-          const newBlock = new THREE.Mesh(geometry, material.clone());
+          const newBlock = new THREE.Mesh(boxGeo, boxMat.clone());
           newBlock.position.copy(pos).add(normal);
           scene.add(newBlock);
           blocks.push(newBlock);
@@ -135,8 +136,7 @@
     const clock = new THREE.Clock();
     function animate() {
       requestAnimationFrame(animate);
-      const delta = clock.getDelta();
-      movePlayer(delta);
+      movePlayer(clock.getDelta());
       renderer.render(scene, camera);
     }
     animate();
