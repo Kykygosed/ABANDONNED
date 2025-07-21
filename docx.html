@@ -40,10 +40,23 @@
       transform: scale(1);
       opacity: 1;
     }
+    #start-btn {
+  background: white;
+  color: black;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
   }
 </style>
 </head>
 <body>
+  <button id="start-btn">Lancer</button>
   <div id="info-list"></div>
 
   <audio id="sound" src="tkt.mp3" preload="auto"></audio>
@@ -207,7 +220,12 @@ async function main() {
   }
 }
 
-main();
+document.getElementById("start-btn").addEventListener("click", () => {
+  document.getElementById("start-btn").style.display = "none";
+  document.getElementById("sound").play().catch(e => console.warn("Audio bloqué :", e));
+  main(); // démarre l’affichage des infos
+});
+
 </script>
 </body>
 </html>
