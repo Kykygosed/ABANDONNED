@@ -38,13 +38,29 @@
     const delay = 1000; // 1 sec entre chaque info
 
     async function getIPData() {
-      try {
-        const res = await fetch('https://ipinfo.io/json?token=demo'); // Remplace "demo" par ta clé gratuite
-        return await res.json();
-      } catch (e) {
-        return { ip: "Non disponible", city: "", country: "", org: "" };
-      }
-    }
+  try {
+    // Étape 1 : obtenir l'IP
+    const ipRes = await fetch('https://api.ipify.org?format=json');
+    const ipJson = await ipRes.json();
+    const ip = ipJson.ip;
+
+    // Étape 2 : utiliser ip-api pour la localisation
+    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,org,query`);
+    const geoJson = await geoRes.json();
+
+    if (geoJson.status !== "success") throw new Error("IP info error");
+
+    return {
+      ip: geoJson.query,
+      city: geoJson.city,
+      country: geoJson.country,
+      org: geoJson.org
+    };
+  } catch (e) {
+    return { ip: "Non disponible", city: "-", country: "-", org: "-" };
+  }
+}
+
 
     function getBrowserData() {
       return {
