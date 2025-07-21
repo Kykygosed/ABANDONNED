@@ -1,107 +1,141 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mes Infos</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: #000;
-      color: #fff;
-      font-family: monospace;
-      font-weight: bold;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      font-size: 24px;
-      text-align: center;
-    }
-    .info {
-      opacity: 0;
-      margin: 10px 0;
-      transition: opacity 0.5s;
-    }
-    .info.visible {
-      opacity: 1;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Infos de connexion</title>
+<style>
+  body {
+    margin:0; padding:0;
+    background: black;
+    color: white;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    user-select: none;
+  }
+  #info-list {
+    font-size: 2rem;
+    line-height: 2.5rem;
+    text-align: center;
+    max-width: 90vw;
+  }
+</style>
 </head>
 <body>
-  <div id="infoContainer"></div>
+  <div id="info-list"></div>
 
-  <script>
-    const infoContainer = document.getElementById('infoContainer');
-    const delay = 1000; // 1 sec entre chaque info
-
-    async function getIPData() {
+<script>
+async function getIPData() {
   try {
-    // Étape 1 : obtenir l'IP publique
+    // 1. IP publique
     const ipRes = await fetch('https://api.ipify.org?format=json');
     const ipJson = await ipRes.json();
     const ip = ipJson.ip;
 
-    // Étape 2 : détails via ipwhois.io en HTTPS
+    // 2. Données géo + ISP via ipwhois
     const geoRes = await fetch(`https://ipwhois.app/json/${ip}`);
     const geoJson = await geoRes.json();
 
-    if (geoJson.success === false) throw new Error("IP info error");
+    if (geoJson.success === false) throw new Error("Erreur API IP");
 
     return {
       ip: geoJson.ip,
-      city: geoJson.city,
       country: geoJson.country,
       org: geoJson.org || geoJson.isp || "Inconnu"
     };
-  } catch (e) {
-    return { ip: "Non disponible", city: "-", country: "-", org: "-" };
+  } catch {
+    return { ip: "Non disponible", country: "-", org: "-" };
   }
 }
 
+function getBrowserInfo() {
+  return {
+    userAgent: navigator.userAgent,
+    platform: navigator.platform,
+    language: navigator.language,
+    languages: navigator.languages ? navigator.languages.join(', ') : navigator.language,
+    cookieEnabled: navigator.cookieEnabled ? "oui" : "non",
+    doNotTrack: navigator.doNotTrack || navigator.msDoNotTrack || window.doNotTrack || "non défini",
+    screenResolution: `${window.screen.width} x ${window.screen.height}`,
+    colorDepth: window.screen.colorDepth + " bits",
+    pixelRatio: window.devicePixelRatio,
+    cpuCores: navigator.hardwareConcurrency || "inconnu",
+    ram: navigator.deviceMemory ? navigator.deviceMemory + " Go" : "inconnu",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "inconnu",
+    darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches ? "oui" : "non",
+    online: navigator.onLine ? "oui" : "non",
+    touchSupport: ('ontouchstart' in window) ? "oui" : "non",
+    webGLRenderer: getWebGLRenderer() || "inconnu",
+    localTime: new Date().toLocaleTimeString(),
+    fullDate: new Date().toLocaleString()
+  };
+}
 
-
-
-    function getBrowserData() {
-      return {
-        browser: navigator.userAgent,
-        language: navigator.language,
-        resolution: `${window.screen.width}x${window.screen.height}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        platform: navigator.platform
-      };
+function getWebGLRenderer() {
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return null;
+    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+    if (debugInfo) {
+      return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
     }
+    return null;
+  } catch {
+    return null;
+  }
+}
 
-    async function displayInfos() {
-      const ipData = await getIPData();
-      const browserData = getBrowserData();
+async function displayInfos() {
+  const infoList = document.getElementById('info-list');
+  const ipData = await getIPData();
+  const browserInfo = getBrowserInfo();
 
-      const infos = [
-        `🌐 IP : ${ipData.ip}`,
-        `📍 Ville : ${ipData.city}`,
-        `🌎 Pays : ${ipData.country}`,
-        `📡 Fournisseur : ${ipData.org}`,
-        `🧭 Navigateur : ${browserData.browser}`,
-        `🖥️ Système : ${browserData.platform}`,
-        `🗣️ Langue : ${browserData.language}`,
-        `🖼️ Résolution : ${browserData.resolution}`,
-        `🕒 Fuseau horaire : ${browserData.timezone}`
-      ];
+  const infos = [
+    `🌐 IP : ${ipData.ip}`,
+    `🌎 Pays : ${ipData.country}`,
+    `📡 Fournisseur : ${ipData.org}`,
+    `🧭 Navigateur (User Agent) : ${browserInfo.userAgent}`,
+    `🖥️ Système (plateforme) : ${browserInfo.platform}`,
+    `🗣️ Langue principale : ${browserInfo.language}`,
+    `🌐 Langues préférées : ${browserInfo.languages}`,
+    `🍪 Cookies activés : ${browserInfo.cookieEnabled}`,
+    `🚫 Do Not Track : ${browserInfo.doNotTrack}`,
+    `🖼️ Résolution écran : ${browserInfo.screenResolution}`,
+    `🎨 Profondeur couleur : ${browserInfo.colorDepth}`,
+    `📱 Pixel Ratio : ${browserInfo.pixelRatio}`,
+    `🧠 CPU Cores : ${browserInfo.cpuCores}`,
+    `💾 RAM approximative : ${browserInfo.ram}`,
+    `🕒 Fuseau horaire : ${browserInfo.timezone}`,
+    `🌙 Mode sombre préféré : ${browserInfo.darkMode}`,
+    `📶 En ligne : ${browserInfo.online}`,
+    `🤏 Support tactile : ${browserInfo.touchSupport}`,
+    `🎮 GPU (WebGL Renderer) : ${browserInfo.webGLRenderer}`,
+    `⏰ Heure locale : ${browserInfo.localTime}`,
+    `📅 Date complète : ${browserInfo.fullDate}`
+  ];
 
-      for (let i = 0; i < infos.length; i++) {
-        const div = document.createElement('div');
-        div.className = 'info';
-        div.textContent = infos[i];
-        infoContainer.appendChild(div);
-        // attendre avant d'afficher
-        await new Promise(resolve => setTimeout(resolve, delay));
-        div.classList.add('visible');
-      }
+  let i = 0;
+  const delay = 1200; // ms entre chaque info
+
+  function showNext() {
+    if (i < infos.length) {
+      const line = document.createElement('div');
+      line.textContent = infos[i];
+      infoList.appendChild(line);
+      i++;
+      setTimeout(showNext, delay);
     }
+  }
 
-    displayInfos();
-  </script>
+  showNext();
+}
+
+displayInfos();
+</script>
 </body>
 </html>
