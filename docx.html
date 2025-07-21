@@ -134,9 +134,7 @@ async function main() {
   const infoListDiv = document.getElementById('info-list');
   const sound = document.getElementById('sound');
 
-  // Joue le son dès que possible
   sound.play().catch(e => {
-    // auto-play peut être bloqué, on pourra gérer ici
     console.log("Lecture automatique bloquée ou erreur audio:", e);
   });
 
@@ -159,22 +157,22 @@ async function main() {
     `🗣️ Langue principale : ${navigator.language}`,
     `🌐 Langues préférées : ${navigator.languages ? navigator.languages.join(', ') : navigator.language}`,
     `🍪 Cookies activés : ${navigator.cookieEnabled ? "oui" : "non"}`,
-    `🚫 Do Not Track : ${navigator.doNotTrack || navigator.msDoNotTrack || window.doNotTrack || "non défini"}`,
+    `🚫 Do Not Track : ${navigator.doNotTrack || "non défini"}`,
     `🖼️ Résolution écran : ${window.screen.width} x ${window.screen.height}`,
     `🎨 Profondeur couleur : ${window.screen.colorDepth} bits`,
     `📱 Pixel Ratio : ${window.devicePixelRatio}`,
-    `🧠 CPU Cores : ${navigator.hardwareConcurrency || "non disponible"}`,
-    `💾 RAM approximative : ${navigator.deviceMemory ? navigator.deviceMemory + " Go" : "non disponible"}`,
-    `🕒 Fuseau horaire : ${Intl.DateTimeFormat().resolvedOptions().timeZone || "non disponible"}`,
+    `🧠 CPU Cores : ${navigator.hardwareConcurrency || "non dispo"}`,
+    `💾 RAM approximative : ${navigator.deviceMemory ? navigator.deviceMemory + " Go" : "non dispo"}`,
+    `🕒 Fuseau horaire : ${Intl.DateTimeFormat().resolvedOptions().timeZone || "non dispo"}`,
     `🌙 Mode sombre préféré : ${window.matchMedia('(prefers-color-scheme: dark)').matches ? "oui" : "non"}`,
     `📶 En ligne : ${navigator.onLine ? "oui" : "non"}`,
     `🤏 Support tactile : ${('ontouchstart' in window) ? "oui" : "non"}`,
     `🎮 GPU (WebGL Renderer) : ${getWebGLRenderer()}`,
     `⏰ Heure locale : ${new Date().toLocaleTimeString()}`,
     `📅 Date complète : ${new Date().toLocaleString()}`,
-    `📶 Type de connexion : ${connection.effectiveType || "non disponible"}`,
-    `⬇️ Débit descendant : ${connection.downlink ? connection.downlink + " Mbps" : "non disponible"}`,
-    `⏳ Latence RTT : ${connection.rtt ? connection.rtt + " ms" : "non disponible"}`,
+    `📶 Type de connexion : ${connection.effectiveType || "non dispo"}`,
+    `⬇️ Débit descendant : ${connection.downlink ? connection.downlink + " Mbps" : "non dispo"}`,
+    `⏳ Latence RTT : ${connection.rtt ? connection.rtt + " ms" : "non dispo"}`,
     `💾 Mode économie de données : ${connection.saveData ? "oui" : "non"}`,
     `🔋 Niveau batterie : ${battery.level}`,
     `⚡ Batterie en charge : ${battery.charging}`,
@@ -186,46 +184,28 @@ async function main() {
     `📋 Permissions lecture presse-papiers : ${perms["clipboard-read"] || "inconnu"}`,
     `📋 Permissions écriture presse-papiers : ${perms["clipboard-write"] || "inconnu"}`,
     `🔔 Permissions push : ${perms.push || "inconnu"}`,
-    `🕹️ Fullscreen support : ${document.fullscreenEnabled ? "oui" : "non"}`,
-    `🧩 Cookies SameSite strict support : ${navigator.cookieEnabled ? "probablement oui" : "non"}`,
-    `🖱️ Souris détectée : ${window.matchMedia('(pointer:fine)').matches ? "oui" : "non"}`,
-    `📱 Pointeur tactile détecté : ${window.matchMedia('(pointer:coarse)').matches ? "oui" : "non"}`,
-    `🌐 Service Worker support : ${'serviceWorker' in navigator ? "oui" : "non"}`,
-    `🧮 Threads Worker support : ${window.Worker ? "oui" : "non"}`,
-    `📀 Local Storage support : ${'localStorage' in window ? "oui" : "non"}`,
-    `🗃️ Session Storage support : ${'sessionStorage' in window ? "oui" : "non"}`,
-    `🔌 Web USB support : ${'usb' in navigator ? "oui" : "non"}`,
-    `🔊 AudioContext support : ${window.AudioContext || window.webkitAudioContext ? "oui" : "non"}`,
-    `📹 MediaDevices API support : ${navigator.mediaDevices ? "oui" : "non"}`,
-    `🌍 Online Status API : ${navigator.onLine ? "en ligne" : "hors ligne"}`,
-    `🔧 User Agent Client Hints support : ${navigator.userAgentData ? "oui" : "non"}`,
-    `🧱 Cookies enabled : ${navigator.cookieEnabled ? "oui" : "non"}`,
-    `🗂️ IndexedDB support : ${window.indexedDB ? "oui" : "non"}`,
-    `🔄 Navigator Share support : ${navigator.share ? "oui" : "non"}`,
-    `🖥️ Max touch points : ${navigator.maxTouchPoints || 0}`,
-    `🛡️ Web Authentication API support : ${window.PublicKeyCredential ? "oui" : "non"}`,
-    `🗣️ Speech Synthesis support : ${window.speechSynthesis ? "oui" : "non"}`,
-    `📧 SMTP support (via JS) : non applicable`,
   ];
 
   for (const info of infos) {
-    await delay(400); // attend 0.4s entre chaque ajout pour effet dynamique
+    await delay(400);
     const p = document.createElement('p');
     p.textContent = info;
-    infoListDiv.appendChild(p);
-
-    // ajout effet "pop"
     p.classList.add('pop');
     p.addEventListener('animationend', () => p.classList.remove('pop'));
+    infoListDiv.appendChild(p);
   }
+
+  // Écran noir après la fin
+  await delay(2000);
+  document.body.innerHTML = "<div style='background:black;position:fixed;top:0;left:0;width:100vw;height:100vh;'></div>";
 }
 
 document.getElementById("start-btn").addEventListener("click", () => {
   document.getElementById("start-btn").style.display = "none";
   document.getElementById("sound").play().catch(e => console.warn("Audio bloqué :", e));
-  main(); // démarre l’affichage des infos
+  main();
 });
-
 </script>
+
 </body>
 </html>
