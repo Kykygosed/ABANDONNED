@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Infos de connexion</title>
+<title>Infos de connexion avancées</title>
 <style>
   body {
     margin:0; padding:0;
@@ -14,128 +14,200 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    flex-direction: column;
+    min-height: 100vh;
     user-select: none;
   }
   #info-list {
-    font-size: 2rem;
-    line-height: 2.5rem;
+    font-size: 1.5rem;
+    line-height: 2rem;
     text-align: center;
     max-width: 90vw;
+  }
+  .pop {
+    animation: popAnim 0.3s ease forwards;
+  }
+  @keyframes popAnim {
+    0% {
+      transform: scale(1);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.5);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 </style>
 </head>
 <body>
   <div id="info-list"></div>
 
+  <audio id="sound" src="tkt.mp3" preload="auto"></audio>
+
 <script>
-async function getIPData() {
-  try {
-    // 1. IP publique
-    const ipRes = await fetch('https://api.ipify.org?format=json');
-    const ipJson = await ipRes.json();
-    const ip = ipJson.ip;
-
-    // 2. Données géo + ISP via ipwhois
-    const geoRes = await fetch(`https://ipwhois.app/json/${ip}`);
-    const geoJson = await geoRes.json();
-
-    if (geoJson.success === false) throw new Error("Erreur API IP");
-
-    return {
-      ip: geoJson.ip,
-      country: geoJson.country,
-      org: geoJson.org || geoJson.isp || "Inconnu"
-    };
-  } catch {
-    return { ip: "Non disponible", country: "-", org: "-" };
-  }
-}
-
-function getBrowserInfo() {
-  return {
-    userAgent: navigator.userAgent,
-    platform: navigator.platform,
-    language: navigator.language,
-    languages: navigator.languages ? navigator.languages.join(', ') : navigator.language,
-    cookieEnabled: navigator.cookieEnabled ? "oui" : "non",
-    doNotTrack: navigator.doNotTrack || navigator.msDoNotTrack || window.doNotTrack || "non défini",
-    screenResolution: `${window.screen.width} x ${window.screen.height}`,
-    colorDepth: window.screen.colorDepth + " bits",
-    pixelRatio: window.devicePixelRatio,
-    cpuCores: navigator.hardwareConcurrency || "inconnu",
-    ram: navigator.deviceMemory ? navigator.deviceMemory + " Go" : "inconnu",
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "inconnu",
-    darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches ? "oui" : "non",
-    online: navigator.onLine ? "oui" : "non",
-    touchSupport: ('ontouchstart' in window) ? "oui" : "non",
-    webGLRenderer: getWebGLRenderer() || "inconnu",
-    localTime: new Date().toLocaleTimeString(),
-    fullDate: new Date().toLocaleString()
-  };
+function delay(ms) {
+  return new Promise(res => setTimeout(res, ms));
 }
 
 function getWebGLRenderer() {
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) return null;
+    if (!gl) return "non disponible";
     const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
     if (debugInfo) {
       return gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
     }
-    return null;
+    return "non disponible";
   } catch {
-    return null;
+    return "non disponible";
   }
 }
 
-async function displayInfos() {
-  const infoList = document.getElementById('info-list');
-  const ipData = await getIPData();
-  const browserInfo = getBrowserInfo();
+function getBrowserPermissions() {
+  if (!navigator.permissions) return Promise.resolve({});
+  const perms = ['geolocation','notifications','camera','microphone','clipboard-read','clipboard-write','push'];
+  const promises = perms.map(name =>
+    navigator.permissions.query({name}).then(res => [name, res.state]).catch(() => [name, "inconnu"])
+  );
+  return Promise.all(promises).then(results => Object.fromEntries(results));
+}
+
+async function getBatteryInfo() {
+  if (!navigator.getBattery) return {level:"inconnu", charging:"inconnu"};
+  try {
+    const bat = await navigator.getBattery();
+    return {
+      level: Math.round(bat.level * 100) + "%",
+      charging: bat.charging ? "oui" : "non"
+    };
+  } catch {
+    return {level:"inconnu", charging:"inconnu"};
+  }
+}
+
+async function getClientIP() {
+  try {
+    const res = await fetch('https://api.ipify.org?format=json');
+    const data = await res.json();
+    return data.ip;
+  } catch {
+    return "non disponible";
+  }
+}
+
+async function getGeoInfo(ip) {
+  if (ip === "non disponible") return {country: "-", region: "-", city: "-", isp: "-"};
+  try {
+    const res = await fetch(`https://ipwhois.app/json/${ip}`);
+    const data = await res.json();
+    if(data.success === false) return {country: "-", region: "-", city: "-", isp: "-"};
+    return {
+      country: data.country || "-",
+      region: data.region || "-",
+      city: data.city || "-",
+      isp: data.org || data.isp || "-"
+    };
+  } catch {
+    return {country: "-", region: "-", city: "-", isp: "-"};
+  }
+}
+
+async function main() {
+  const infoListDiv = document.getElementById('info-list');
+  const sound = document.getElementById('sound');
+
+  // Joue le son dès que possible
+  sound.play().catch(e => {
+    // auto-play peut être bloqué, on pourra gérer ici
+    console.log("Lecture automatique bloquée ou erreur audio:", e);
+  });
+
+  const ip = await getClientIP();
+  const geo = await getGeoInfo(ip);
+  const battery = await getBatteryInfo();
+  const perms = await getBrowserPermissions();
+
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  const memoryUsedMB = performance.memory ? (performance.memory.usedJSHeapSize / 1024 / 1024).toFixed(2) : "non disponible";
 
   const infos = [
-    `🌐 IP : ${ipData.ip}`,
-    `🌎 Pays : ${ipData.country}`,
-    `📡 Fournisseur : ${ipData.org}`,
-    `🧭 Navigateur (User Agent) : ${browserInfo.userAgent}`,
-    `🖥️ Système (plateforme) : ${browserInfo.platform}`,
-    `🗣️ Langue principale : ${browserInfo.language}`,
-    `🌐 Langues préférées : ${browserInfo.languages}`,
-    `🍪 Cookies activés : ${browserInfo.cookieEnabled}`,
-    `🚫 Do Not Track : ${browserInfo.doNotTrack}`,
-    `🖼️ Résolution écran : ${browserInfo.screenResolution}`,
-    `🎨 Profondeur couleur : ${browserInfo.colorDepth}`,
-    `📱 Pixel Ratio : ${browserInfo.pixelRatio}`,
-    `🧠 CPU Cores : ${browserInfo.cpuCores}`,
-    `💾 RAM approximative : ${browserInfo.ram}`,
-    `🕒 Fuseau horaire : ${browserInfo.timezone}`,
-    `🌙 Mode sombre préféré : ${browserInfo.darkMode}`,
-    `📶 En ligne : ${browserInfo.online}`,
-    `🤏 Support tactile : ${browserInfo.touchSupport}`,
-    `🎮 GPU (WebGL Renderer) : ${browserInfo.webGLRenderer}`,
-    `⏰ Heure locale : ${browserInfo.localTime}`,
-    `📅 Date complète : ${browserInfo.fullDate}`
+    `🌐 IP publique : ${ip}`,
+    `🌎 Pays : ${geo.country}`,
+    `🏞️ Région : ${geo.region}`,
+    `🏙️ Ville : ${geo.city}`,
+    `📡 Fournisseur (ISP) : ${geo.isp}`,
+    `🧭 Navigateur (User Agent) : ${navigator.userAgent}`,
+    `🖥️ Plateforme : ${navigator.platform}`,
+    `🗣️ Langue principale : ${navigator.language}`,
+    `🌐 Langues préférées : ${navigator.languages ? navigator.languages.join(', ') : navigator.language}`,
+    `🍪 Cookies activés : ${navigator.cookieEnabled ? "oui" : "non"}`,
+    `🚫 Do Not Track : ${navigator.doNotTrack || navigator.msDoNotTrack || window.doNotTrack || "non défini"}`,
+    `🖼️ Résolution écran : ${window.screen.width} x ${window.screen.height}`,
+    `🎨 Profondeur couleur : ${window.screen.colorDepth} bits`,
+    `📱 Pixel Ratio : ${window.devicePixelRatio}`,
+    `🧠 CPU Cores : ${navigator.hardwareConcurrency || "non disponible"}`,
+    `💾 RAM approximative : ${navigator.deviceMemory ? navigator.deviceMemory + " Go" : "non disponible"}`,
+    `🕒 Fuseau horaire : ${Intl.DateTimeFormat().resolvedOptions().timeZone || "non disponible"}`,
+    `🌙 Mode sombre préféré : ${window.matchMedia('(prefers-color-scheme: dark)').matches ? "oui" : "non"}`,
+    `📶 En ligne : ${navigator.onLine ? "oui" : "non"}`,
+    `🤏 Support tactile : ${('ontouchstart' in window) ? "oui" : "non"}`,
+    `🎮 GPU (WebGL Renderer) : ${getWebGLRenderer()}`,
+    `⏰ Heure locale : ${new Date().toLocaleTimeString()}`,
+    `📅 Date complète : ${new Date().toLocaleString()}`,
+    `📶 Type de connexion : ${connection.effectiveType || "non disponible"}`,
+    `⬇️ Débit descendant : ${connection.downlink ? connection.downlink + " Mbps" : "non disponible"}`,
+    `⏳ Latence RTT : ${connection.rtt ? connection.rtt + " ms" : "non disponible"}`,
+    `💾 Mode économie de données : ${connection.saveData ? "oui" : "non"}`,
+    `🔋 Niveau batterie : ${battery.level}`,
+    `⚡ Batterie en charge : ${battery.charging}`,
+    `🧹 Mémoire JS utilisée : ${memoryUsedMB} MB`,
+    `🔐 Permissions notifications : ${perms.notifications || "inconnu"}`,
+    `🌍 Permissions géolocalisation : ${perms.geolocation || "inconnu"}`,
+    `📸 Permissions caméra : ${perms.camera || "inconnu"}`,
+    `🎤 Permissions micro : ${perms.microphone || "inconnu"}`,
+    `📋 Permissions lecture presse-papiers : ${perms["clipboard-read"] || "inconnu"}`,
+    `📋 Permissions écriture presse-papiers : ${perms["clipboard-write"] || "inconnu"}`,
+    `🔔 Permissions push : ${perms.push || "inconnu"}`,
+    `🕹️ Fullscreen support : ${document.fullscreenEnabled ? "oui" : "non"}`,
+    `🧩 Cookies SameSite strict support : ${navigator.cookieEnabled ? "probablement oui" : "non"}`,
+    `🖱️ Souris détectée : ${window.matchMedia('(pointer:fine)').matches ? "oui" : "non"}`,
+    `📱 Pointeur tactile détecté : ${window.matchMedia('(pointer:coarse)').matches ? "oui" : "non"}`,
+    `🌐 Service Worker support : ${'serviceWorker' in navigator ? "oui" : "non"}`,
+    `🧮 Threads Worker support : ${window.Worker ? "oui" : "non"}`,
+    `📀 Local Storage support : ${'localStorage' in window ? "oui" : "non"}`,
+    `🗃️ Session Storage support : ${'sessionStorage' in window ? "oui" : "non"}`,
+    `🔌 Web USB support : ${'usb' in navigator ? "oui" : "non"}`,
+    `🔊 AudioContext support : ${window.AudioContext || window.webkitAudioContext ? "oui" : "non"}`,
+    `📹 MediaDevices API support : ${navigator.mediaDevices ? "oui" : "non"}`,
+    `🌍 Online Status API : ${navigator.onLine ? "en ligne" : "hors ligne"}`,
+    `🔧 User Agent Client Hints support : ${navigator.userAgentData ? "oui" : "non"}`,
+    `🧱 Cookies enabled : ${navigator.cookieEnabled ? "oui" : "non"}`,
+    `🗂️ IndexedDB support : ${window.indexedDB ? "oui" : "non"}`,
+    `🔄 Navigator Share support : ${navigator.share ? "oui" : "non"}`,
+    `🖥️ Max touch points : ${navigator.maxTouchPoints || 0}`,
+    `🛡️ Web Authentication API support : ${window.PublicKeyCredential ? "oui" : "non"}`,
+    `🗣️ Speech Synthesis support : ${window.speechSynthesis ? "oui" : "non"}`,
+    `📧 SMTP support (via JS) : non applicable`,
   ];
 
-  let i = 0;
-  const delay = 1200; // ms entre chaque info
+  for (const info of infos) {
+    await delay(400); // attend 0.4s entre chaque ajout pour effet dynamique
+    const p = document.createElement('p');
+    p.textContent = info;
+    infoListDiv.appendChild(p);
 
-  function showNext() {
-    if (i < infos.length) {
-      const line = document.createElement('div');
-      line.textContent = infos[i];
-      infoList.appendChild(line);
-      i++;
-      setTimeout(showNext, delay);
-    }
+    // ajout effet "pop"
+    p.classList.add('pop');
+    p.addEventListener('animationend', () => p.classList.remove('pop'));
   }
-
-  showNext();
 }
 
-displayInfos();
+main();
 </script>
 </body>
 </html>
