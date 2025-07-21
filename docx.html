@@ -44,22 +44,23 @@
     const ipJson = await ipRes.json();
     const ip = ipJson.ip;
 
-    // Étape 2 : détails via ip-api en HTTPS
-    const geoRes = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,city,org,query`);
+    // Étape 2 : détails via ipwhois.io en HTTPS
+    const geoRes = await fetch(`https://ipwhois.app/json/${ip}`);
     const geoJson = await geoRes.json();
 
-    if (geoJson.status !== "success") throw new Error("IP info error");
+    if (geoJson.success === false) throw new Error("IP info error");
 
     return {
-      ip: geoJson.query,
+      ip: geoJson.ip,
       city: geoJson.city,
       country: geoJson.country,
-      org: geoJson.org
+      org: geoJson.org || geoJson.isp || "Inconnu"
     };
   } catch (e) {
     return { ip: "Non disponible", city: "-", country: "-", org: "-" };
   }
 }
+
 
 
 
