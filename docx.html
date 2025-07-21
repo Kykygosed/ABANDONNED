@@ -39,13 +39,13 @@
 
     async function getIPData() {
   try {
-    // Étape 1 : obtenir l'IP
+    // Étape 1 : obtenir l'IP publique
     const ipRes = await fetch('https://api.ipify.org?format=json');
     const ipJson = await ipRes.json();
     const ip = ipJson.ip;
 
-    // Étape 2 : utiliser ip-api pour la localisation
-    const geoRes = await fetch(`http://ip-api.com/json/${ip}?fields=status,country,city,org,query`);
+    // Étape 2 : détails via ip-api en HTTPS
+    const geoRes = await fetch(`https://ip-api.com/json/${ip}?fields=status,country,city,org,query`);
     const geoJson = await geoRes.json();
 
     if (geoJson.status !== "success") throw new Error("IP info error");
@@ -60,6 +60,7 @@
     return { ip: "Non disponible", city: "-", country: "-", org: "-" };
   }
 }
+
 
 
     function getBrowserData() {
