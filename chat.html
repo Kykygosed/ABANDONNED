@@ -127,61 +127,61 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script>
-  // --- CONFIG FIREBASE ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-    authDomain: "kychat-45596.firebaseapp.com",
-    databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-    projectId: "kychat-45596",
-    storageBucket: "kychat-45596.appspot.com",
-    messagingSenderId: "104462848972",
-    appId: "1:104462848972:web:7ac49e63008e9a11150369"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+  authDomain: "kychat-45596.firebaseapp.com",
+  databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+  projectId: "kychat-45596",
+  storageBucket: "kychat-45596.appspot.com",
+  messagingSenderId: "104462848972",
+  appId: "1:104462848972:web:7ac49e63008e9a11150369"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const auth = firebase.auth();
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
 
-  let currentUser, targetUid, chatId;
+let currentUser, targetUid, chatId;
 
-  function getChatId(uid1, uid2) {
-    return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
-  }
+// Retourne un chatId unique pour deux UIDs (ordre alphabétique)
+function getChatId(uid1, uid2) {
+  return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
+}
 
-  function formatMessageDate(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
+// Formate la date selon "Aujourd'hui à HH:mm", "Hier à HH:mm" ou date complète
+function formatMessageDate(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
 
-    const isToday =
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear();
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
 
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday =
-      date.getDate() === yesterday.getDate() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getFullYear() === yesterday.getFullYear();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday =
+    date.getDate() === yesterday.getDate() &&
+    date.getMonth() === yesterday.getMonth() &&
+    date.getFullYear() === yesterday.getFullYear();
 
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
 
-    if (isToday) return `Aujourd'hui à ${hours}:${minutes}`;
-    if (isYesterday) return `Hier à ${hours}:${minutes}`;
+  if (isToday) return `Aujourd'hui à ${hours}:${minutes}`;
+  if (isYesterday) return `Hier à ${hours}:${minutes}`;
 
-    // Sinon date complète
-    return date.toLocaleString();
-  }
+  return date.toLocaleString();
+}
 
-  // Met à jour scroll vers le bas des messages
-  function scrollToBottom() {
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
+// Scroll automatique vers le bas des messages
+function scrollToBottom() {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
 
-  // Affiche les messages dans #messages
- async function displayMessages(messagesObj) {
+// Affiche les messages dans #messages, avec pseudo récupéré et cache
+async function displayMessages(messagesObj) {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.innerHTML = "";
 
@@ -191,152 +191,123 @@
     (a, b) => a.timestamp - b.timestamp
   );
 
-  // On va créer une liste de promesses pour récupérer tous les pseudos avant d’afficher
-  const promises = sorted.map(async (msg) => {
-    const section = document.createElement("section");
-    section.className = "message-section";
+  if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
 
-    const pseudoSpan = document.createElement("span");
-    pseudoSpan.className = "message-pseudo";
-    if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
+  const sections = await Promise.all(
+    sorted.map(async (msg) => {
+      const section = document.createElement("section");
+      section.className = "message-section";
 
-    // On utilise un cache pour ne pas refaire les appels
-    if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+      const pseudoSpan = document.createElement("span");
+      pseudoSpan.className = "message-pseudo";
+      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
 
-    if (!displayMessages.pseudoCache[msg.from]) {
-      const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
-      displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
-    }
-    pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
+      // Récupérer pseudo avec cache
+      if (!displayMessages.pseudoCache[msg.from]) {
+        const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
+        displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
+      }
+      pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
 
-    const dateSpan = document.createElement("div");
-    dateSpan.className = "message-date";
-    dateSpan.textContent = formatMessageDate(msg.timestamp);
+      const dateSpan = document.createElement("div");
+      dateSpan.className = "message-date";
+      dateSpan.textContent = formatMessageDate(msg.timestamp);
 
-    const textDiv = document.createElement("div");
-    textDiv.className = "message-text";
-    textDiv.textContent = msg.text;
+      const textDiv = document.createElement("div");
+      textDiv.className = "message-text";
+      textDiv.textContent = msg.text;
 
-    section.appendChild(pseudoSpan);
-    section.appendChild(dateSpan);
-    section.appendChild(textDiv);
+      section.appendChild(pseudoSpan);
+      section.appendChild(dateSpan);
+      section.appendChild(textDiv);
 
-    return section;
-  });
+      return section;
+    })
+  );
 
-  // Attendre que toutes les sections soient prêtes
-  const sections = await Promise.all(promises);
-
-  // Ajouter toutes les sections dans le DOM
   sections.forEach((section) => messagesDiv.appendChild(section));
 
   scrollToBottom();
 }
 
+// Charge les messages du chat en temps réel
+function loadMessages() {
+  if (!chatId) return;
+  const messagesRef = db.ref(`chats/${chatId}/messages`);
 
-      // Affichage date + texte une fois pseudo chargé
-      function appendDetails() {
-        const dateSpan = document.createElement("div");
-        dateSpan.className = "message-date";
-        dateSpan.textContent = formatMessageDate(msg.timestamp);
+  messagesRef.on("value", (snap) => {
+    displayMessages(snap.val());
+  });
+}
 
-        const textDiv = document.createElement("div");
-        textDiv.className = "message-text";
-        textDiv.textContent = msg.text;
+// Envoie un message (texte non vide)
+async function sendMessage(text) {
+  if (!text.trim()) return;
 
-        section.appendChild(pseudoSpan);
-        section.appendChild(dateSpan);
-        section.appendChild(textDiv);
-      }
-
-      // Si pseudo est déjà en cache on l'affiche tout de suite
-      if (displayMessages.pseudoCache[msg.from]) {
-        appendDetails();
-      }
-
-      messagesDiv.appendChild(section);
-    });
-
-    scrollToBottom();
-  }
-
-  // Charge les messages du chat
-  async function loadMessages() {
-    if (!chatId) return;
-    const messagesRef = db.ref(`chats/${chatId}/messages`);
-
-    messagesRef.on("value", (snap) => {
-      const data = snap.val();
-      displayMessages(data);
-    });
-  }
-
-  // Envoie un message
-  async function sendMessage(text) {
-    if (!text.trim()) return;
-
-    const messagesRef = db.ref(`chats/${chatId}/messages`);
-    const newMsgRef = messagesRef.push();
-    await newMsgRef.set({
-      text: text.trim(),
-      from: currentUser.uid,
-      timestamp: Date.now(),
-    });
-
-    document.getElementById("messageInput").value = "";
-  }
-
-  // Met à jour la connectivité à online/offline selon présence sur page
-  async function setConnectivity(state) {
-    if (!currentUser) return;
-    await db.ref(`users/${currentUser.uid}/connectivity`).set(state);
-  }
-
-  // Boutons et input
-  document.getElementById("backBtn").addEventListener("click", () => {
-    setConnectivity("offline");
-    window.location.href = "home.html";
+  const messagesRef = db.ref(`chats/${chatId}/messages`);
+  const newMsgRef = messagesRef.push();
+  await newMsgRef.set({
+    text: text.trim(),
+    from: currentUser.uid,
+    timestamp: Date.now(),
   });
 
-  document.getElementById("sendBtn").addEventListener("click", () => {
-    const input = document.getElementById("messageInput");
-    sendMessage(input.value);
+  document.getElementById("messageInput").value = "";
+}
+
+// Met à jour la connectivité en ligne/hors-ligne dans Firebase
+async function setConnectivity(state) {
+  if (!currentUser) return;
+  await db.ref(`users/${currentUser.uid}/connectivity`).set(state);
+}
+
+// Gestion des événements des boutons et input
+document.getElementById("backBtn").addEventListener("click", () => {
+  setConnectivity("offline");
+  window.location.href = "home.html";
+});
+
+document.getElementById("sendBtn").addEventListener("click", () => {
+  const input = document.getElementById("messageInput");
+  sendMessage(input.value);
+});
+
+document.getElementById("messageInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage(e.target.value);
+  }
+});
+
+// Authentification et initialisation
+auth.onAuthStateChanged(async (user) => {
+  if (!user) return (window.location.href = "index.html");
+  currentUser = user;
+
+  const userRef = db.ref(`users/${currentUser.uid}`);
+
+  // Mettre online
+  await userRef.child("connectivity").set("online");
+
+  // Quand on quitte la page => offline
+  window.addEventListener("beforeunload", () => {
+    userRef.child("connectivity").set("offline");
   });
 
-  document.getElementById("messageInput").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendMessage(e.target.value);
-    }
-  });
+  // Récupérer l'UUID du destinataire
+  const actualSnap = await userRef.child("actual").once("value");
+  targetUid = actualSnap.val();
 
-  // Auth + setup
-  auth.onAuthStateChanged(async (user) => {
-    if (!user) return (window.location.href = "index.html");
-    currentUser = user;
+  if (!targetUid || targetUid === "main") {
+    alert("Aucune conversation sélectionnée.");
+    await userRef.child("connectivity").set("offline");
+    return (window.location.href = "home.html");
+  }
 
-    const userRef = db.ref(`users/${currentUser.uid}`);
-    // Set connectivity online
-    await userRef.child("connectivity").set("online");
+  chatId = getChatId(currentUser.uid, targetUid);
+  loadMessages();
+});
 
-    // On unload set offline
-    window.addEventListener("beforeunload", () => {
-      userRef.child("connectivity").set("offline");
-    });
-
-    // Récupérer actual (UUID du destinataire)
-    const actualSnap = await userRef.child("actual").once("value");
-    targetUid = actualSnap.val();
-
-    if (!targetUid || targetUid === "main") {
-      alert("Aucune conversation sélectionnée.");
-      await userRef.child("connectivity").set("offline");
-      return (window.location.href = "home.html");
-    }
-
-    chatId = getChatId(currentUser.uid, targetUid);
-    loadMessages();
-  });
 </script>
 
 </body>
