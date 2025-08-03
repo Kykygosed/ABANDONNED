@@ -1,187 +1,325 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>KykyChat - Conversation</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: sans-serif;
-      background: #f0f0f0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Chat</title>
+<style>
+  body {
+    margin: 0; 
+    font-family: Arial, sans-serif;
+    background-color: #121212;
+    color: #ddd;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
 
-    #messages {
-      flex: 1;
-      overflow-y: auto;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-    }
+  .topbar {
+    background-color: #1f1f1f;
+    color: #ddd;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    font-size: 18px;
+    user-select: none;
+  }
+  .topbar .back {
+    cursor: pointer;
+    margin-right: 15px;
+    font-weight: bold;
+    font-size: 22px;
+    line-height: 1;
+    color: #ddd;
+    transition: color 0.2s;
+  }
+  .topbar .back:hover {
+    color: #4caf50;
+  }
+  .topbar .title {
+    flex-grow: 1;
+  }
 
-    .message {
-      margin-bottom: 8px;
-      padding: 10px;
-      border-radius: 10px;
-      max-width: 60%;
-      word-wrap: break-word;
-    }
+  #messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 10px 15px;
+    background-color: #181818;
+  }
 
-    .mine {
-      background-color: #d1e7dd;
-      align-self: flex-end;
-    }
+  .message-section {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #333;
+    padding-bottom: 8px;
+  }
 
-    .theirs {
-      background-color: #f8d7da;
-      align-self: flex-start;
-    }
+  .message-pseudo {
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 3px;
+  }
+  .message-pseudo.self {
+    color: #4caf50;
+  }
+  .message-date {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 5px;
+  }
+  .message-text {
+    font-size: 15px;
+    white-space: pre-wrap;
+  }
 
-    #inputContainer {
-      display: flex;
-      padding: 10px;
-      border-top: 1px solid #ccc;
-      background: white;
-    }
+  #inputArea {
+    background-color: #1f1f1f;
+    padding: 10px 15px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
 
-    #messageInput {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
+  #messageInput {
+    flex-grow: 1;
+    padding: 8px 12px;
+    font-size: 15px;
+    border-radius: 4px;
+    border: none;
+    outline: none;
+    background-color: #2a2a2a;
+    color: #ddd;
+  }
+  #messageInput::placeholder {
+    color: #666;
+  }
 
-    #sendButton {
-      margin-left: 10px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    #sendButton:hover {
-      background-color: #45a049;
-    }
-  </style>
+  #sendBtn {
+    background-color: #4caf50;
+    border: none;
+    color: white;
+    padding: 8px 15px;
+    font-weight: bold;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+  #sendBtn:hover {
+    background-color: #45a045;
+  }
+</style>
 </head>
 <body>
 
-  <div id="messages"></div>
+<div class="topbar">
+  <div class="back" id="backBtn">&#8592;</div>
+  <div class="title">Chat</div>
+</div>
 
-  <div id="inputContainer">
-    <input id="messageInput" type="text" placeholder="Écris un message..." />
-    <button id="sendButton" onclick="sendMessage()">Envoyer</button>
-  </div>
+<div id="messages"></div>
 
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<div id="inputArea">
+  <input id="messageInput" type="text" placeholder="Écrire un message..." autocomplete="off" />
+  <button id="sendBtn">Envoyer</button>
+</div>
 
-  <script>
-    // ✅ Configuration Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-      authDomain: "kychat-45596.firebaseapp.com",
-      databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-      projectId: "kychat-45596",
-      storageBucket: "kychat-45596.appspot.com",
-      messagingSenderId: "104462848972",
-      appId: "1:104462848972:web:7ac49e63008e9a11150369"
-    };
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  // --- CONFIG FIREBASE ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
+    authDomain: "kychat-45596.firebaseapp.com",
+    databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
+    projectId: "kychat-45596",
+    storageBucket: "kychat-45596.appspot.com",
+    messagingSenderId: "104462848972",
+    appId: "1:104462848972:web:7ac49e63008e9a11150369"
+  };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
 
-    let currentUser;
-    let targetUid;
-    let chatId;
+  let currentUser, targetUid, chatId;
 
-    // ✅ Authentification & Récupération de la cible
-    auth.onAuthStateChanged(async (user) => {
-  if (!user) return window.location.href = "index.html";
-  currentUser = user;
-
-  // Mettre connectivity à online quand on arrive sur la page
-  const userRef = db.ref(`users/${currentUser.uid}`);
-  await userRef.child('connectivity').set('online');
-
-  // Mettre connectivity à offline quand on quitte/ferme la page
-  window.addEventListener("beforeunload", () => {
-    userRef.child('connectivity').set('offline');
-  });
-
-  const actualSnap = await userRef.child('actual').once('value');
-  targetUid = actualSnap.val();
-
-  if (!targetUid || targetUid === "main") {
-    alert("Aucune conversation en cours.");
-    await userRef.child('connectivity').set('offline'); // On prévient aussi ici
-    return window.location.href = "home.html";
+  function getChatId(uid1, uid2) {
+    return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
   }
 
-  chatId = getChatId(currentUser.uid, targetUid);
-  loadMessages();
-});
+  function formatMessageDate(timestamp) {
+    const date = new Date(timestamp);
+    const now = new Date();
 
-    // ✅ Génère un ID unique pour la conversation
-    function getChatId(uid1, uid2) {
-      return uid1 < uid2 ? `${uid1}_${uid2}` : `${uid2}_${uid1}`;
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday =
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear();
+
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+
+    if (isToday) return `Aujourd'hui à ${hours}:${minutes}`;
+    if (isYesterday) return `Hier à ${hours}:${minutes}`;
+
+    // Sinon date complète
+    return date.toLocaleString();
+  }
+
+  // Met à jour scroll vers le bas des messages
+  function scrollToBottom() {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  // Affiche les messages dans #messages
+  function displayMessages(messagesObj) {
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+
+    if (!messagesObj) return;
+
+    // messagesObj est un objet clé -> {text, from, timestamp}
+    const sorted = Object.values(messagesObj).sort(
+      (a, b) => a.timestamp - b.timestamp
+    );
+
+    sorted.forEach((msg) => {
+      const section = document.createElement("section");
+      section.className = "message-section";
+
+      const pseudoSpan = document.createElement("span");
+      pseudoSpan.className = "message-pseudo";
+      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
+
+      // On récupère le pseudo du message
+      // On le charge à partir de la DB si possible (async pas simple ici), donc on stocke une cache locale
+      if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+      if (displayMessages.pseudoCache[msg.from]) {
+        pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
+        appendDetails();
+      } else {
+        // récupérer pseudo depuis DB
+        db.ref(`users/${msg.from}/pseudo`).once("value").then((snap) => {
+          const p = snap.val() || "Inconnu";
+          displayMessages.pseudoCache[msg.from] = p;
+          pseudoSpan.textContent = p;
+          appendDetails();
+        });
+      }
+
+      // Affichage date + texte une fois pseudo chargé
+      function appendDetails() {
+        const dateSpan = document.createElement("div");
+        dateSpan.className = "message-date";
+        dateSpan.textContent = formatMessageDate(msg.timestamp);
+
+        const textDiv = document.createElement("div");
+        textDiv.className = "message-text";
+        textDiv.textContent = msg.text;
+
+        section.appendChild(pseudoSpan);
+        section.appendChild(dateSpan);
+        section.appendChild(textDiv);
+      }
+
+      // Si pseudo est déjà en cache on l'affiche tout de suite
+      if (displayMessages.pseudoCache[msg.from]) {
+        appendDetails();
+      }
+
+      messagesDiv.appendChild(section);
+    });
+
+    scrollToBottom();
+  }
+
+  // Charge les messages du chat
+  async function loadMessages() {
+    if (!chatId) return;
+    const messagesRef = db.ref(`chats/${chatId}/messages`);
+
+    messagesRef.on("value", (snap) => {
+      const data = snap.val();
+      displayMessages(data);
+    });
+  }
+
+  // Envoie un message
+  async function sendMessage(text) {
+    if (!text.trim()) return;
+
+    const messagesRef = db.ref(`chats/${chatId}/messages`);
+    const newMsgRef = messagesRef.push();
+    await newMsgRef.set({
+      text: text.trim(),
+      from: currentUser.uid,
+      timestamp: Date.now(),
+    });
+
+    document.getElementById("messageInput").value = "";
+  }
+
+  // Met à jour la connectivité à online/offline selon présence sur page
+  async function setConnectivity(state) {
+    if (!currentUser) return;
+    await db.ref(`users/${currentUser.uid}/connectivity`).set(state);
+  }
+
+  // Boutons et input
+  document.getElementById("backBtn").addEventListener("click", () => {
+    setConnectivity("offline");
+    window.location.href = "home.html";
+  });
+
+  document.getElementById("sendBtn").addEventListener("click", () => {
+    const input = document.getElementById("messageInput");
+    sendMessage(input.value);
+  });
+
+  document.getElementById("messageInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage(e.target.value);
+    }
+  });
+
+  // Auth + setup
+  auth.onAuthStateChanged(async (user) => {
+    if (!user) return (window.location.href = "index.html");
+    currentUser = user;
+
+    const userRef = db.ref(`users/${currentUser.uid}`);
+    // Set connectivity online
+    await userRef.child("connectivity").set("online");
+
+    // On unload set offline
+    window.addEventListener("beforeunload", () => {
+      userRef.child("connectivity").set("offline");
+    });
+
+    // Récupérer actual (UUID du destinataire)
+    const actualSnap = await userRef.child("actual").once("value");
+    targetUid = actualSnap.val();
+
+    if (!targetUid || targetUid === "main") {
+      alert("Aucune conversation sélectionnée.");
+      await userRef.child("connectivity").set("offline");
+      return (window.location.href = "home.html");
     }
 
-    // ✅ Affiche les messages en temps réel
-    function loadMessages() {
-      const messagesRef = db.ref(`messages/${chatId}`);
-      messagesRef.off();
-
-      messagesRef.on("child_added", (snap) => {
-        const msg = snap.val();
-        displayMessage(msg.uid, msg.text);
-      });
-
-      // Entrée pour envoyer
-      document.getElementById("messageInput").addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          sendMessage();
-        }
-      });
-    }
-
-    // ✅ Envoie un message
-    function sendMessage() {
-      const input = document.getElementById("messageInput");
-      const text = input.value.trim();
-      if (!text) return;
-
-      const message = {
-        uid: currentUser.uid,
-        text: text,
-        timestamp: Date.now()
-      };
-
-      db.ref(`messages/${chatId}`).push(message);
-      input.value = "";
-    }
-
-    // ✅ Affiche un message dans l'interface
-    function displayMessage(uid, text) {
-      const container = document.getElementById("messages");
-      const div = document.createElement("div");
-      div.classList.add("message");
-      div.classList.add(uid === currentUser.uid ? "mine" : "theirs");
-      div.textContent = text;
-      container.appendChild(div);
-      container.scrollTop = container.scrollHeight;
-    }
-  </script>
+    chatId = getChatId(currentUser.uid, targetUid);
+    loadMessages();
+  });
+</script>
 
 </body>
 </html>
