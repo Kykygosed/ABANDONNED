@@ -11,20 +11,21 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 0;
-            background: #f2f2f2;
+            background: url('https://cdn.wallpapersafari.com/10/13/lzGRZK.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
         }
 
         header {
             display: flex;
             justify-content: flex-end;
             padding: 20px;
-            background: #5865f2;
-            color: white;
+            background: rgba(0, 0, 0, 0.6);
         }
 
         .add-friend-btn {
-            background: white;
-            color: #5865f2;
+            background: #5865f2;
+            color: white;
             border: none;
             padding: 10px 20px;
             border-radius: 8px;
@@ -40,13 +41,23 @@
         }
 
         .friend-card {
-            background: white;
+            background: rgba(30, 31, 34, 0.8);
             padding: 15px;
             border-radius: 10px;
-            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .friend-card strong {
+            color: white;
+            font-size: 16px;
+        }
+
+        .friend-card span {
+            color: #b9bbbe;
+            font-size: 14px;
         }
 
         .popup {
@@ -54,7 +65,8 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: white;
+            background: #2f3136;
+            color: white;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
@@ -62,12 +74,15 @@
             flex-direction: column;
             gap: 15px;
             z-index: 999;
+            width: 300px;
         }
 
         .popup input {
             padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            border: none;
+            border-radius: 6px;
+            background: #202225;
+            color: white;
         }
 
         .popup button {
@@ -85,7 +100,7 @@
             left: 0;
             width: 100vw;
             height: 100vh;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.4);
             display: none;
             z-index: 998;
         }
@@ -101,14 +116,12 @@
 
     <div id="overlay"></div>
 
-    <!-- Popup pour ajouter un ami -->
     <div class="popup" id="addFriendPopup">
         <h3>Ajouter un ami</h3>
         <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami (ex : kyky#1234)">
         <button onclick="sendFriendRequest()">Demander</button>
     </div>
 
-    <!-- Popup pour remplir les infos manquantes -->
     <div class="popup" id="fillInfoPopup">
         <h3>Complète ton profil</h3>
         <input type="text" id="pseudoInput" placeholder="Ton pseudo">
@@ -117,7 +130,6 @@
         <button onclick="saveUserInfo()">Enregistrer</button>
     </div>
 
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -209,13 +221,12 @@
                         <strong>${data.pseudo || 'Inconnu'}</strong><br>
                         <span>${data.state || 'Statut inconnu'}</span>
                     </div>
-                    <div>${data.id || 'ID manquant'}</div>
+                    <div style="text-align: right;">${data.id || 'ID manquant'}</div>
                 `;
                 list.appendChild(div);
             }
         }
 
-        // Affichage des demandes en attente (pour acceptation)
         auth.onAuthStateChanged(user => {
             if (!user) return;
             db.ref(`friend_requests/${user.uid}`).on('value', async snap => {
