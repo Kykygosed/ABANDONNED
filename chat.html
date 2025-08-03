@@ -154,57 +154,50 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let currentUser, targetUid, chatId;
+let lastRenderedMessageKey = null;
 
-// Génère un ID unique de conversation
 function getChatId(uid1, uid2) {
   return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
 }
 
-// Formate la date comme "Aujourd'hui à 14:23"
 function formatMessageDate(timestamp) {
   const date = new Date(timestamp);
   const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-
-  const isToday = date.toDateString() === now.toDateString();
   const isYesterday = date.toDateString() === yesterday.toDateString();
 
-  const h = String(date.getHours()).padStart(2, "0");
-  const m = String(date.getMinutes()).padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
 
-  return isToday
-    ? `Aujourd'hui à ${h}:${m}`
-    : isYesterday
-    ? `Hier à ${h}:${m}`
-    : date.toLocaleString();
+  if (isToday) return `Aujourd'hui à ${hours}:${minutes}`;
+  if (isYesterday) return `Hier à ${hours}:${minutes}`;
+  return date.toLocaleString();
 }
 
-// Scroll automatique
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Cache des pseudos et PDP
-const pseudoCache = {};
-const pdpCache = {};
-let lastMsgKey = null;
-
-// Affiche les nouveaux messages (sans tout recharger)
 async function displayMessages(messagesObj) {
   const messagesDiv = document.getElementById("messages");
-
   if (!messagesObj) return;
 
-  const sorted = Object.entries(messagesObj)
-    .sort(([, a], [, b]) => a.timestamp - b.timestamp);
+  const sorted = Object.entries(messagesObj).sort(
+    (a, b) => a[1].timestamp - b[1].timestamp
+  );
+
+  if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+  if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
 
   let lastMsg = null;
   let lastSection = null;
 
   for (const [key, msg] of sorted) {
-    if (lastMsgKey && key <= lastMsgKey) continue;
+    if (key === lastRenderedMessageKey) continue;
 
     const isSameSender = lastMsg && lastMsg.from === msg.from;
     const isCloseInTime = lastMsg && (msg.timestamp - lastMsg.timestamp < 2 * 60 * 1000);
@@ -214,37 +207,36 @@ async function displayMessages(messagesObj) {
       const section = document.createElement("section");
       section.className = "message-section";
 
-      // Récupère pseudo
-      if (!pseudoCache[msg.from]) {
-        const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
-        pseudoCache[msg.from] = snap.val() || "Inconnu";
-      }
-
-      // Récupère PDP
-      if (!pdpCache[msg.from]) {
-        const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
-        let pdpVal = snap.val() || "";
-        if (pdpVal.startsWith("pdp:pdp:")) {
-          pdpVal = pdpVal.split("pdp:pdp:")[1].replace("https://imgur.com/", "https://i.imgur.com/") + ".jpeg";
-        }
-        pdpCache[msg.from] = pdpVal;
-      }
-
       // PDP
-      if (pdpCache[msg.from]) {
-        const img = document.createElement("img");
-        img.className = "message-pdp";
-        img.src = pdpCache[msg.from];
-        img.alt = "PDP";
-        img.onerror = () => (img.src = "defaultpdp.png");
-        section.appendChild(img);
+      if (!displayMessages.pdpCache[msg.from]) {
+        const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
+        let raw = snap.val() || "";
+        let url = "";
+
+        if (raw.startsWith("pdp:")) {
+          url = raw.replace("pdp:", "").replace("https://imgur.com/", "https://i.imgur.com/") + ".jpeg";
+        }
+
+        displayMessages.pdpCache[msg.from] = url;
       }
+
+      const img = document.createElement("img");
+      img.className = "message-pdp";
+      img.src = displayMessages.pdpCache[msg.from];
+      img.alt = "PDP";
+      img.onerror = () => (img.src = "defaultpdp.png");
+      section.appendChild(img);
 
       // Pseudo
+      if (!displayMessages.pseudoCache[msg.from]) {
+        const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
+        displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
+      }
+
       const pseudoSpan = document.createElement("span");
       pseudoSpan.className = "message-pseudo";
       if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
-      pseudoSpan.textContent = pseudoCache[msg.from];
+      pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
       section.appendChild(pseudoSpan);
 
       // Date
@@ -269,41 +261,43 @@ async function displayMessages(messagesObj) {
     }
 
     lastMsg = msg;
-    lastMsgKey = key;
+    lastRenderedMessageKey = key;
   }
 
   scrollToBottom();
 }
 
-// Écoute les nouveaux messages en temps réel
 function loadMessages() {
   if (!chatId) return;
   const messagesRef = db.ref(`chats/${chatId}/messages`);
-  messagesRef.on("value", (snap) => {
-    displayMessages(snap.val());
+  messagesRef.off(); // Évite les doublons
+
+  messagesRef.on("child_added", async (snap) => {
+    const allMessages = (await db.ref(`chats/${chatId}/messages`).once("value")).val();
+    displayMessages(allMessages);
   });
 }
 
-// Envoie un message
 async function sendMessage(text) {
   if (!text.trim()) return;
+
   const messagesRef = db.ref(`chats/${chatId}/messages`);
   const newMsgRef = messagesRef.push();
+
   await newMsgRef.set({
     text: text.trim(),
     from: currentUser.uid,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
+
   document.getElementById("messageInput").value = "";
 }
 
-// Connectivité en ligne/hors-ligne
 async function setConnectivity(state) {
   if (!currentUser) return;
   await db.ref(`users/${currentUser.uid}/connectivity`).set(state);
 }
 
-// Gère les événements DOM
 document.getElementById("backBtn").addEventListener("click", () => {
   setConnectivity("offline");
   window.location.href = "home.html";
@@ -321,7 +315,6 @@ document.getElementById("messageInput").addEventListener("keydown", (e) => {
   }
 });
 
-// Auth et initialisation
 auth.onAuthStateChanged(async (user) => {
   if (!user) return (window.location.href = "index.html");
   currentUser = user;
@@ -345,6 +338,7 @@ auth.onAuthStateChanged(async (user) => {
   chatId = getChatId(currentUser.uid, targetUid);
   loadMessages();
 });
+
 
 
 </script>
