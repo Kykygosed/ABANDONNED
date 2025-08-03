@@ -181,40 +181,58 @@
   }
 
   // Affiche les messages dans #messages
-  function displayMessages(messagesObj) {
-    const messagesDiv = document.getElementById("messages");
-    messagesDiv.innerHTML = "";
+ async function displayMessages(messagesObj) {
+  const messagesDiv = document.getElementById("messages");
+  messagesDiv.innerHTML = "";
 
-    if (!messagesObj) return;
+  if (!messagesObj) return;
 
-    // messagesObj est un objet clé -> {text, from, timestamp}
-    const sorted = Object.values(messagesObj).sort(
-      (a, b) => a.timestamp - b.timestamp
-    );
+  const sorted = Object.values(messagesObj).sort(
+    (a, b) => a.timestamp - b.timestamp
+  );
 
-    sorted.forEach((msg) => {
-      const section = document.createElement("section");
-      section.className = "message-section";
+  // On va créer une liste de promesses pour récupérer tous les pseudos avant d’afficher
+  const promises = sorted.map(async (msg) => {
+    const section = document.createElement("section");
+    section.className = "message-section";
 
-      const pseudoSpan = document.createElement("span");
-      pseudoSpan.className = "message-pseudo";
-      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
+    const pseudoSpan = document.createElement("span");
+    pseudoSpan.className = "message-pseudo";
+    if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
 
-      // On récupère le pseudo du message
-      // On le charge à partir de la DB si possible (async pas simple ici), donc on stocke une cache locale
-      if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
-      if (displayMessages.pseudoCache[msg.from]) {
-        pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
-        appendDetails();
-      } else {
-        // récupérer pseudo depuis DB
-        db.ref(`users/${msg.from}/pseudo`).once("value").then((snap) => {
-          const p = snap.val() || "Inconnu";
-          displayMessages.pseudoCache[msg.from] = p;
-          pseudoSpan.textContent = p;
-          appendDetails();
-        });
-      }
+    // On utilise un cache pour ne pas refaire les appels
+    if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+
+    if (!displayMessages.pseudoCache[msg.from]) {
+      const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
+      displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
+    }
+    pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
+
+    const dateSpan = document.createElement("div");
+    dateSpan.className = "message-date";
+    dateSpan.textContent = formatMessageDate(msg.timestamp);
+
+    const textDiv = document.createElement("div");
+    textDiv.className = "message-text";
+    textDiv.textContent = msg.text;
+
+    section.appendChild(pseudoSpan);
+    section.appendChild(dateSpan);
+    section.appendChild(textDiv);
+
+    return section;
+  });
+
+  // Attendre que toutes les sections soient prêtes
+  const sections = await Promise.all(promises);
+
+  // Ajouter toutes les sections dans le DOM
+  sections.forEach((section) => messagesDiv.appendChild(section));
+
+  scrollToBottom();
+}
+
 
       // Affichage date + texte une fois pseudo chargé
       function appendDetails() {
