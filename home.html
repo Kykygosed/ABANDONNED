@@ -287,7 +287,7 @@ header {
         auth.onAuthStateChanged(async (user) => {
             if (!user) return window.location.href = 'index.html';
             currentUser = user;
-            const snap = await db.ref(users/${user.uid}).once('value');
+            const snap = await db.ref(`users/${user.uid}`).once('value');
             const data = snap.val();
 
             if (!data || !data.pseudo || !data.state || !data.id) {
@@ -320,7 +320,7 @@ header {
             usersSnap.forEach(child => {
                 const data = child.val();
                 if (data.id === friendId) {
-                    db.ref(friend_requests/${child.key}/${currentUser.uid}).set(true);
+                    db.ref(`friend_requests/${child.key}/${currentUser.uid}`).set(true);
                     alert("Demande envoyée à " + data.pseudo);
                     found = true;
                 }
@@ -333,7 +333,7 @@ header {
             const pseudo = document.getElementById('pseudoInput').value;
             const state = document.getElementById('stateInput').value;
             const id = document.getElementById('idInput').value;
-            await db.ref(users/${currentUser.uid}).update({ pseudo, state, id });
+            await db.ref(`users/${currentUser.uid}`).update({ pseudo, state, id });
             hidePopups();
             loadFriends();
         }
@@ -341,21 +341,21 @@ header {
         async function loadFriends() {
             const list = document.getElementById('friendList');
             list.innerHTML = '';
-            const friendsSnap = await db.ref(users/${currentUser.uid}/friends).once('value');
+            const friendsSnap = await db.ref(`users/${currentUser.uid}/friends`).once('value');
             if (!friendsSnap.exists()) return;
             for (const friendUid of Object.keys(friendsSnap.val())) {
-                const snap = await db.ref(users/${friendUid}).once('value');
+                const snap = await db.ref(`users/${friendUid}`).once('value');
                 const data = snap.val();
                 if (!data) continue;
                 const div = document.createElement('div');
                 div.className = 'friend-card';
-                div.innerHTML = 
+                div.innerHTML = `
                     <div>
                         <strong>${data.pseudo || 'Inconnu'}</strong><br>
                         <span>${data.state || 'Statut inconnu'}</span>
                     </div>
                     <div>${data.id || 'ID manquant'}</div>
-                ;
+                `;
                 list.appendChild(div);
             }
         }
@@ -363,30 +363,30 @@ header {
         // Affichage des demandes en attente (pour acceptation)
         auth.onAuthStateChanged(user => {
             if (!user) return;
-            db.ref(friend_requests/${user.uid}).on('value', async snap => {
+            db.ref(`friend_requests/${user.uid}`).on('value', async snap => {
                 if (!snap.exists()) return;
                 const list = document.getElementById('friendList');
                 for (const senderUid of Object.keys(snap.val())) {
-                    const senderSnap = await db.ref(users/${senderUid}).once('value');
+                    const senderSnap = await db.ref(`users/${senderUid}`).once('value');
                     const senderData = senderSnap.val();
                     const div = document.createElement('div');
                     div.className = 'friend-card';
-                    div.innerHTML = 
+                    div.innerHTML = `
                         <div>
                             <strong>Demande de ${senderData?.pseudo || 'Inconnu'}</strong><br>
                             <span>${senderData?.id || ''}</span>
                         </div>
                         <button onclick="acceptFriend('${senderUid}')">Accepter</button>
-                    ;
+                    `;
                     list.appendChild(div);
                 }
             });
         });
 
         async function acceptFriend(friendUid) {
-            await db.ref(users/${currentUser.uid}/friends/${friendUid}).set(true);
-            await db.ref(users/${friendUid}/friends/${currentUser.uid}).set(true);
-            await db.ref(friend_requests/${currentUser.uid}/${friendUid}).remove();
+            await db.ref(`users/${currentUser.uid}/friends/${friendUid}`).set(true);
+            await db.ref(`users/${friendUid}/friends/${currentUser.uid}`).set(true);
+            await db.ref(`friend_requests/${currentUser.uid}/${friendUid}`).remove();
             loadFriends();
         }
     </script>
