@@ -194,68 +194,85 @@ async function displayMessages(messagesObj) {
   if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
   if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
 
-  const sections = await Promise.all(
-    sorted.map(async (msg) => {
+  let lastMsg = null;
+  let lastSection = null;
+
+  for (const msg of sorted) {
+    const isSameSender = lastMsg && lastMsg.from === msg.from;
+    const isCloseInTime = lastMsg && (msg.timestamp - lastMsg.timestamp < 2 * 60 * 1000); // 2 min
+
+    const shouldGroup = isSameSender && isCloseInTime;
+
+    if (!shouldGroup) {
+      // Nouvelle section de message
       const section = document.createElement("section");
       section.className = "message-section";
 
-      const pseudoSpan = document.createElement("span");
-      pseudoSpan.className = "message-pseudo";
-      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
-
-      // Récupérer pseudo avec cache
+      // Pseudo
       if (!displayMessages.pseudoCache[msg.from]) {
         const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
         displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
       }
-      pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
+      const pseudo = displayMessages.pseudoCache[msg.from];
 
-      // Récupérer photo de profil avec cache
+      const pseudoSpan = document.createElement("span");
+      pseudoSpan.className = "message-pseudo";
+      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
+      pseudoSpan.textContent = pseudo;
+
+      // PDP
       if (!displayMessages.pdpCache[msg.from]) {
         const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
         let val = snap.val() || "";
-        // Extraire URL après "pdp:pdp:"
         if (val.startsWith("pdp:pdp:")) {
           val = val.split("pdp:pdp:")[1];
-          // Convertir imgur.com en i.imgur.com pour accès direct à l'image
           val = val.replace("https://imgur.com/", "https://i.imgur.com/");
         } else {
-          val = ""; // pas d'image valide
+          val = "";
         }
         displayMessages.pdpCache[msg.from] = val;
       }
 
-      // Créer img profil si on a une URL
       if (displayMessages.pdpCache[msg.from]) {
         const img = document.createElement("img");
         img.className = "message-pdp";
         img.src = displayMessages.pdpCache[msg.from];
         img.alt = "Photo de profil";
-        img.width = 32;  // exemple taille, adapte selon CSS
-        img.height = 32;
+        img.onerror = () => (img.src = "defaultpdp.png");
         section.appendChild(img);
       }
 
+      // Date
       const dateSpan = document.createElement("div");
       dateSpan.className = "message-date";
       dateSpan.textContent = formatMessageDate(msg.timestamp);
 
+      // Texte
       const textDiv = document.createElement("div");
       textDiv.className = "message-text";
       textDiv.textContent = msg.text;
 
+      // Assemble
       section.appendChild(pseudoSpan);
       section.appendChild(dateSpan);
       section.appendChild(textDiv);
 
-      return section;
-    })
-  );
+      messagesDiv.appendChild(section);
+      lastSection = section;
+    } else {
+      // Ajouter un message supplémentaire à la même section
+      const textDiv = document.createElement("div");
+      textDiv.className = "message-text";
+      textDiv.textContent = msg.text;
+      lastSection.appendChild(textDiv);
+    }
 
-  sections.forEach((section) => messagesDiv.appendChild(section));
+    lastMsg = msg;
+  }
 
   scrollToBottom();
 }
+
 
 // Charge les messages du chat en temps réel
 function loadMessages() {
