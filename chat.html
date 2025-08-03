@@ -192,6 +192,7 @@ async function displayMessages(messagesObj) {
   );
 
   if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+  if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
 
   const sections = await Promise.all(
     sorted.map(async (msg) => {
@@ -208,6 +209,32 @@ async function displayMessages(messagesObj) {
         displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
       }
       pseudoSpan.textContent = displayMessages.pseudoCache[msg.from];
+
+      // Récupérer photo de profil avec cache
+      if (!displayMessages.pdpCache[msg.from]) {
+        const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
+        let val = snap.val() || "";
+        // Extraire URL après "pdp:pdp:"
+        if (val.startsWith("pdp:pdp:")) {
+          val = val.split("pdp:pdp:")[1];
+          // Convertir imgur.com en i.imgur.com pour accès direct à l'image
+          val = val.replace("https://imgur.com/", "https://i.imgur.com/");
+        } else {
+          val = ""; // pas d'image valide
+        }
+        displayMessages.pdpCache[msg.from] = val;
+      }
+
+      // Créer img profil si on a une URL
+      if (displayMessages.pdpCache[msg.from]) {
+        const img = document.createElement("img");
+        img.className = "message-pdp";
+        img.src = displayMessages.pdpCache[msg.from];
+        img.alt = "Photo de profil";
+        img.width = 32;  // exemple taille, adapte selon CSS
+        img.height = 32;
+        section.appendChild(img);
+      }
 
       const dateSpan = document.createElement("div");
       dateSpan.className = "message-date";
