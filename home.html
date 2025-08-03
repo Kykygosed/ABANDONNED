@@ -1,261 +1,180 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Page Principale - Amis</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: url('https://cdn.wallpapersafari.com/10/13/lzGRZK.jpg') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-        }
-
-        header {
-            display: flex;
-            justify-content: flex-end;
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.6);
-        }
-
-        .add-friend-btn {
-            background: #5865f2;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .friend-list {
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .friend-card {
-            background: rgba(30, 31, 34, 0.8);
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            backdrop-filter: blur(5px);
-        }
-
-        .friend-card strong {
-            color: white;
-            font-size: 16px;
-        }
-
-        .friend-card span {
-            color: #b9bbbe;
-            font-size: 14px;
-        }
-
-        .popup {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #2f3136;
-            color: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
-            display: none;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 999;
-            width: 300px;
-        }
-
-        .popup input {
-            padding: 10px;
-            border: none;
-            border-radius: 6px;
-            background: #202225;
-            color: white;
-        }
-
-        .popup button {
-            background: #5865f2;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        #overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.4);
-            display: none;
-            z-index: 998;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KykyChat - Amis</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Rubik', sans-serif;
+      background: url('https://i.imgur.com/GEylF7t.jpeg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+    }
+    header {
+      display: flex;
+      justify-content: flex-end;
+      padding: 20px;
+    }
+    #addFriendBtn {
+      background-color: #5865F2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    #friendList {
+      margin: 20px;
+    }
+    .friend {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .friend .info {
+      display: flex;
+      flex-direction: column;
+    }
+    .friend .info .pseudo {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    .popup {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #2f3136;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+      z-index: 1000;
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    }
+    .popup input {
+      padding: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 4px;
+      width: 100%;
+    }
+    .popup button {
+      margin-top: 10px;
+      background-color: #5865F2;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+      display: none;
+    }
+  </style>
 </head>
-
 <body>
-    <header>
-        <button class="add-friend-btn" onclick="openPopup()">+ Ajouter un ami</button>
-    </header>
+  <header>
+    <button id="addFriendBtn">+ Ajouter un ami</button>
+  </header>
 
-    <div class="friend-list" id="friendList"></div>
+  <div id="friendList"></div>
 
-    <div id="overlay"></div>
+  <div class="overlay" id="overlay"></div>
+  <div class="popup" id="popup">
+    <h3>Ajouter un ami</h3>
+    <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami">
+    <button onclick="sendFriendRequest()">Demander</button>
+  </div>
 
-    <div class="popup" id="addFriendPopup">
-        <h3>Ajouter un ami</h3>
-        <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami (ex : kyky#1234)">
-        <button onclick="sendFriendRequest()">Demander</button>
-    </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, get, set, onValue, update, push, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    <div class="popup" id="fillInfoPopup">
-        <h3>Complète ton profil</h3>
-        <input type="text" id="pseudoInput" placeholder="Ton pseudo">
-        <input type="text" id="stateInput" placeholder="Ton statut (ex : En ligne)">
-        <input type="text" id="idInput" placeholder="Ton identifiant (ex : kyky#1234)">
-        <button onclick="saveUserInfo()">Enregistrer</button>
-    </div>
+    const firebaseConfig = {
+      apiKey: "AIzaSyC1bCrWlC3-GqJKC3Y13r-6j7GHZDoAZiY",
+      authDomain: "kykychat-24c7f.firebaseapp.com",
+      databaseURL: "https://kykychat-24c7f-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "kykychat-24c7f",
+      storageBucket: "kykychat-24c7f.appspot.com",
+      messagingSenderId: "330458397840",
+      appId: "1:330458397840:web:314afad8cd317f602b46c4"
+    };
 
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const userId = localStorage.getItem("userId");
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
-            authDomain: "kychat-45596.firebaseapp.com",
-            databaseURL: "https://kychat-45596-default-rtdb.firebaseio.com",
-            projectId: "kychat-45596",
-            storageBucket: "kychat-45596.appspot.com",
-            messagingSenderId: "104462848972",
-            appId: "1:104462848972:web:7ac49e63008e9a11150369"
-        };
+    document.getElementById("addFriendBtn").onclick = () => {
+      document.getElementById("popup").style.display = 'block';
+      document.getElementById("overlay").style.display = 'block';
+    }
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.database();
+    document.getElementById("overlay").onclick = () => {
+      document.getElementById("popup").style.display = 'none';
+      document.getElementById("overlay").style.display = 'none';
+    }
 
-        let currentUser;
+    function sendFriendRequest() {
+      const friendId = document.getElementById("friendIdInput").value;
+      const requestRef = ref(db, `users/${friendId}/pending/${userId}`);
+      set(requestRef, true);
+      alert("Demande envoyée à " + friendId);
+      document.getElementById("popup").style.display = 'none';
+      document.getElementById("overlay").style.display = 'none';
+    }
 
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) return window.location.href = 'index.html';
-            currentUser = user;
-            const snap = await db.ref(`users/${user.uid}`).once('value');
-            const data = snap.val();
-
-            if (!data || !data.pseudo || !data.state || !data.id) {
-                showPopup('fillInfoPopup');
-            } else {
-                loadFriends();
+    function loadFriends() {
+      const friendRef = ref(db, `users/${userId}/friends`);
+      onValue(friendRef, snapshot => {
+        const list = document.getElementById("friendList");
+        list.innerHTML = "";
+        snapshot.forEach(childSnap => {
+          const fid = childSnap.key;
+          get(ref(db, `users/${fid}`)).then(friendSnap => {
+            const data = friendSnap.val();
+            if (!data || !data.pseudo || !data.id || !data.state) {
+              const newPseudo = prompt("Entrez le pseudo pour " + fid);
+              const newState = prompt("Entrez le statut pour " + fid);
+              const newId = prompt("Entrez l'identifiant pour " + fid);
+              if (newPseudo && newState && newId) {
+                set(ref(db, `users/${fid}`), {
+                  pseudo: newPseudo,
+                  state: newState,
+                  id: newId
+                });
+              }
+              return;
             }
+            const div = document.createElement("div");
+            div.className = "friend";
+            div.innerHTML = `
+              <div class="info">
+                <span class="pseudo">${data.pseudo}</span>
+                <span style="color: gray; font-size: 0.9em;">${data.state}</span>
+              </div>
+              <div style="color: rgba(255,255,255,0.6); font-size: 0.8em;">${data.id}</div>
+            `;
+            list.appendChild(div);
+          });
         });
+      });
+    }
 
-        function openPopup() {
-            showPopup('addFriendPopup');
-        }
-
-        function showPopup(id) {
-            document.getElementById('overlay').style.display = 'block';
-            document.getElementById(id).style.display = 'flex';
-        }
-
-        function hidePopups() {
-            document.getElementById('overlay').style.display = 'none';
-            document.querySelectorAll('.popup').forEach(p => p.style.display = 'none');
-        }
-
-        document.getElementById('overlay').addEventListener('click', hidePopups);
-
-        async function sendFriendRequest() {
-            const friendId = document.getElementById('friendIdInput').value;
-            const usersSnap = await db.ref('users').once('value');
-            let found = false;
-            usersSnap.forEach(child => {
-                const data = child.val();
-                if (data.id === friendId) {
-                    db.ref(`friend_requests/${child.key}/${currentUser.uid}`).set(true);
-                    alert("Demande envoyée à " + data.pseudo);
-                    found = true;
-                }
-            });
-            if (!found) alert("Identifiant introuvable");
-            hidePopups();
-        }
-
-        async function saveUserInfo() {
-            const pseudo = document.getElementById('pseudoInput').value;
-            const state = document.getElementById('stateInput').value;
-            const id = document.getElementById('idInput').value;
-            await db.ref(`users/${currentUser.uid}`).update({ pseudo, state, id });
-            hidePopups();
-            loadFriends();
-        }
-
-        async function loadFriends() {
-            const list = document.getElementById('friendList');
-            list.innerHTML = '';
-            const friendsSnap = await db.ref(`users/${currentUser.uid}/friends`).once('value');
-            if (!friendsSnap.exists()) return;
-            for (const friendUid of Object.keys(friendsSnap.val())) {
-                const snap = await db.ref(`users/${friendUid}`).once('value');
-                const data = snap.val();
-                if (!data) continue;
-                const div = document.createElement('div');
-                div.className = 'friend-card';
-                div.innerHTML = `
-                    <div>
-                        <strong>${data.pseudo || 'Inconnu'}</strong><br>
-                        <span>${data.state || 'Statut inconnu'}</span>
-                    </div>
-                    <div style="text-align: right;">${data.id || 'ID manquant'}</div>
-                `;
-                list.appendChild(div);
-            }
-        }
-
-        auth.onAuthStateChanged(user => {
-            if (!user) return;
-            db.ref(`friend_requests/${user.uid}`).on('value', async snap => {
-                if (!snap.exists()) return;
-                const list = document.getElementById('friendList');
-                for (const senderUid of Object.keys(snap.val())) {
-                    const senderSnap = await db.ref(`users/${senderUid}`).once('value');
-                    const senderData = senderSnap.val();
-                    const div = document.createElement('div');
-                    div.className = 'friend-card';
-                    div.innerHTML = `
-                        <div>
-                            <strong>Demande de ${senderData?.pseudo || 'Inconnu'}</strong><br>
-                            <span>${senderData?.id || ''}</span>
-                        </div>
-                        <button onclick="acceptFriend('${senderUid}')">Accepter</button>
-                    `;
-                    list.appendChild(div);
-                }
-            });
-        });
-
-        async function acceptFriend(friendUid) {
-            await db.ref(`users/${currentUser.uid}/friends/${friendUid}`).set(true);
-            await db.ref(`users/${friendUid}/friends/${currentUser.uid}`).set(true);
-            await db.ref(`friend_requests/${currentUser.uid}/${friendUid}`).remove();
-            loadFriends();
-        }
-    </script>
+    loadFriends();
+  </script>
 </body>
-
 </html>
