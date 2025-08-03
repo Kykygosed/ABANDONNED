@@ -127,7 +127,7 @@ const firebaseConfig = {
       document.getElementById("overlay").style.display = 'none';
     }
 
-    function sendFriendRequest() {
+    window.sendFriendRequest = function () {
       const friendId = document.getElementById("friendIdInput").value;
       const requestRef = ref(db, `users/${friendId}/pending/${userId}`);
       set(requestRef, true);
