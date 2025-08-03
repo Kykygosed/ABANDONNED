@@ -155,124 +155,113 @@ const db = firebase.database();
 
 let currentUser, targetUid, chatId;
 
-// Retourne un chatId unique pour deux UIDs (ordre alphabétique)
+// Génère un ID unique de conversation
 function getChatId(uid1, uid2) {
   return uid1 < uid2 ? uid1 + "_" + uid2 : uid2 + "_" + uid1;
 }
 
-// Formate la date selon "Aujourd'hui à HH:mm", "Hier à HH:mm" ou date complète
+// Formate la date comme "Aujourd'hui à 14:23"
 function formatMessageDate(timestamp) {
   const date = new Date(timestamp);
   const now = new Date();
-
-  const isToday =
-    date.getDate() === now.getDate() &&
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear();
-
   const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const isYesterday =
-    date.getDate() === yesterday.getDate() &&
-    date.getMonth() === yesterday.getMonth() &&
-    date.getFullYear() === yesterday.getFullYear();
+  yesterday.setDate(now.getDate() - 1);
 
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const isToday = date.toDateString() === now.toDateString();
+  const isYesterday = date.toDateString() === yesterday.toDateString();
 
-  if (isToday) return `Aujourd'hui à ${hours}:${minutes}`;
-  if (isYesterday) return `Hier à ${hours}:${minutes}`;
+  const h = String(date.getHours()).padStart(2, "0");
+  const m = String(date.getMinutes()).padStart(2, "0");
 
-  return date.toLocaleString();
+  return isToday
+    ? `Aujourd'hui à ${h}:${m}`
+    : isYesterday
+    ? `Hier à ${h}:${m}`
+    : date.toLocaleString();
 }
 
-// Scroll automatique vers le bas des messages
+// Scroll automatique
 function scrollToBottom() {
   const messagesDiv = document.getElementById("messages");
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
-// Affiche les messages dans #messages, avec pseudo récupéré et cache
+// Cache des pseudos et PDP
+const pseudoCache = {};
+const pdpCache = {};
+let lastMsgKey = null;
+
+// Affiche les nouveaux messages (sans tout recharger)
 async function displayMessages(messagesObj) {
   const messagesDiv = document.getElementById("messages");
-  messagesDiv.innerHTML = "";
 
   if (!messagesObj) return;
 
-  const sorted = Object.values(messagesObj).sort(
-    (a, b) => a.timestamp - b.timestamp
-  );
-
-  if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
-  if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
+  const sorted = Object.entries(messagesObj)
+    .sort(([, a], [, b]) => a.timestamp - b.timestamp);
 
   let lastMsg = null;
   let lastSection = null;
 
-  for (const msg of sorted) {
-    const isSameSender = lastMsg && lastMsg.from === msg.from;
-    const isCloseInTime = lastMsg && (msg.timestamp - lastMsg.timestamp < 2 * 60 * 1000); // 2 min
+  for (const [key, msg] of sorted) {
+    if (lastMsgKey && key <= lastMsgKey) continue;
 
+    const isSameSender = lastMsg && lastMsg.from === msg.from;
+    const isCloseInTime = lastMsg && (msg.timestamp - lastMsg.timestamp < 2 * 60 * 1000);
     const shouldGroup = isSameSender && isCloseInTime;
 
     if (!shouldGroup) {
-      // Nouvelle section de message
       const section = document.createElement("section");
       section.className = "message-section";
 
-      // Pseudo
-      if (!displayMessages.pseudoCache[msg.from]) {
+      // Récupère pseudo
+      if (!pseudoCache[msg.from]) {
         const snap = await db.ref(`users/${msg.from}/pseudo`).once("value");
-        displayMessages.pseudoCache[msg.from] = snap.val() || "Inconnu";
+        pseudoCache[msg.from] = snap.val() || "Inconnu";
       }
-      const pseudo = displayMessages.pseudoCache[msg.from];
 
-      const pseudoSpan = document.createElement("span");
-      pseudoSpan.className = "message-pseudo";
-      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
-      pseudoSpan.textContent = pseudo;
+      // Récupère PDP
+      if (!pdpCache[msg.from]) {
+        const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
+        let pdpVal = snap.val() || "";
+        if (pdpVal.startsWith("pdp:pdp:")) {
+          pdpVal = pdpVal.split("pdp:pdp:")[1].replace("https://imgur.com/", "https://i.imgur.com/") + ".jpeg";
+        }
+        pdpCache[msg.from] = pdpVal;
+      }
 
       // PDP
-      if (!displayMessages.pdpCache[msg.from]) {
-        const snap = await db.ref(`users/${msg.from}/pdp`).once("value");
-        let val = snap.val() || "";
-        if (val.startsWith("pdp:pdp:")) {
-          val = val.split("pdp:pdp:")[1];
-          val = val.replace("https://imgur.com/", "https://i.imgur.com/");
-        } else {
-          val = "";
-        }
-        displayMessages.pdpCache[msg.from] = val;
-      }
-
-      if (displayMessages.pdpCache[msg.from]) {
+      if (pdpCache[msg.from]) {
         const img = document.createElement("img");
         img.className = "message-pdp";
-        img.src = displayMessages.pdpCache[msg.from];
-        img.alt = "Photo de profil";
+        img.src = pdpCache[msg.from];
+        img.alt = "PDP";
         img.onerror = () => (img.src = "defaultpdp.png");
         section.appendChild(img);
       }
+
+      // Pseudo
+      const pseudoSpan = document.createElement("span");
+      pseudoSpan.className = "message-pseudo";
+      if (msg.from === currentUser.uid) pseudoSpan.classList.add("self");
+      pseudoSpan.textContent = pseudoCache[msg.from];
+      section.appendChild(pseudoSpan);
 
       // Date
       const dateSpan = document.createElement("div");
       dateSpan.className = "message-date";
       dateSpan.textContent = formatMessageDate(msg.timestamp);
+      section.appendChild(dateSpan);
 
       // Texte
       const textDiv = document.createElement("div");
       textDiv.className = "message-text";
       textDiv.textContent = msg.text;
-
-      // Assemble
-      section.appendChild(pseudoSpan);
-      section.appendChild(dateSpan);
       section.appendChild(textDiv);
 
       messagesDiv.appendChild(section);
       lastSection = section;
     } else {
-      // Ajouter un message supplémentaire à la même section
       const textDiv = document.createElement("div");
       textDiv.className = "message-text";
       textDiv.textContent = msg.text;
@@ -280,44 +269,41 @@ async function displayMessages(messagesObj) {
     }
 
     lastMsg = msg;
+    lastMsgKey = key;
   }
 
   scrollToBottom();
 }
 
-
-// Charge les messages du chat en temps réel
+// Écoute les nouveaux messages en temps réel
 function loadMessages() {
   if (!chatId) return;
   const messagesRef = db.ref(`chats/${chatId}/messages`);
-
   messagesRef.on("value", (snap) => {
     displayMessages(snap.val());
   });
 }
 
-// Envoie un message (texte non vide)
+// Envoie un message
 async function sendMessage(text) {
   if (!text.trim()) return;
-
   const messagesRef = db.ref(`chats/${chatId}/messages`);
   const newMsgRef = messagesRef.push();
   await newMsgRef.set({
     text: text.trim(),
     from: currentUser.uid,
-    timestamp: Date.now(),
+    timestamp: Date.now()
   });
-
   document.getElementById("messageInput").value = "";
 }
 
-// Met à jour la connectivité en ligne/hors-ligne dans Firebase
+// Connectivité en ligne/hors-ligne
 async function setConnectivity(state) {
   if (!currentUser) return;
   await db.ref(`users/${currentUser.uid}/connectivity`).set(state);
 }
 
-// Gestion des événements des boutons et input
+// Gère les événements DOM
 document.getElementById("backBtn").addEventListener("click", () => {
   setConnectivity("offline");
   window.location.href = "home.html";
@@ -335,22 +321,18 @@ document.getElementById("messageInput").addEventListener("keydown", (e) => {
   }
 });
 
-// Authentification et initialisation
+// Auth et initialisation
 auth.onAuthStateChanged(async (user) => {
   if (!user) return (window.location.href = "index.html");
   currentUser = user;
 
   const userRef = db.ref(`users/${currentUser.uid}`);
-
-  // Mettre online
   await userRef.child("connectivity").set("online");
 
-  // Quand on quitte la page => offline
   window.addEventListener("beforeunload", () => {
     userRef.child("connectivity").set("offline");
   });
 
-  // Récupérer l'UUID du destinataire
   const actualSnap = await userRef.child("actual").once("value");
   targetUid = actualSnap.val();
 
@@ -363,6 +345,7 @@ auth.onAuthStateChanged(async (user) => {
   chatId = getChatId(currentUser.uid, targetUid);
   loadMessages();
 });
+
 
 </script>
 
