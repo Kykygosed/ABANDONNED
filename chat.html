@@ -48,29 +48,41 @@
     background-color: #181818;
   }
 
-  .message-section {
-    margin-bottom: 15px;
-    border-bottom: 1px solid #333;
-    padding-bottom: 8px;
-  }
+.message-section {
+  padding: 10px;
+  border-bottom: 1px solid #333;
+}
 
-  .message-pseudo {
-    font-weight: bold;
-    font-size: 14px;
-    margin-bottom: 3px;
-  }
-  .message-pseudo.self {
-    color: #4caf50;
-  }
-  .message-date {
-    font-size: 11px;
-    color: #888;
-    margin-bottom: 5px;
-  }
-  .message-text {
-    font-size: 15px;
-    white-space: pre-wrap;
-  }
+.message-pdp {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  vertical-align: middle;
+  margin-right: 8px;
+}
+
+.message-pseudo {
+  font-weight: bold;
+  color: #ccc;
+  display: block;
+}
+
+.message-pseudo.self {
+  color: #4caf50; /* Vert pour l'utilisateur */
+}
+
+.message-date {
+  font-size: 0.8em;
+  color: #888;
+  margin-bottom: 5px;
+}
+
+.message-text {
+  margin-left: 40px; /* pour aligner avec la pdp */
+  margin-bottom: 4px;
+  color: #fff;
+}
+
 
   #inputArea {
     background-color: #1f1f1f;
