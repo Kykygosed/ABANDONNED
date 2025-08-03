@@ -122,21 +122,26 @@ header {
 }
 
 .friend-card button {
-    background-color: #5865f2;
-    border: none;
+    background-color: #4CAF50;
     color: white;
-    padding: 8px 16px;
-    border-radius: 10px;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
     cursor: pointer;
-    font-weight: 700;
-    transition: background-color 0.3s ease;
-    margin-left: 20px;
-    flex-shrink: 0;
+    transition: background-color 0.3s, transform 0.2s;
+    font-weight: bold;
+    font-size: 14px;
 }
 
 .friend-card button:hover {
-    background-color: #4750d8;
+    background-color: #45a049;
+    transform: scale(1.05);
 }
+
+.friend-card button:active {
+    transform: scale(0.97);
+}
+
 
 /* Popup et overlay */
 
