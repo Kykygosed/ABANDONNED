@@ -186,18 +186,20 @@ async function displayMessages(messagesObj) {
   const messagesDiv = document.getElementById("messages");
   if (!messagesObj) return;
 
+  if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
+  if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
+  if (!displayMessages.renderedKeys) displayMessages.renderedKeys = new Set();
+
   const sorted = Object.entries(messagesObj).sort(
     (a, b) => a[1].timestamp - b[1].timestamp
   );
-
-  if (!displayMessages.pseudoCache) displayMessages.pseudoCache = {};
-  if (!displayMessages.pdpCache) displayMessages.pdpCache = {};
 
   let lastMsg = null;
   let lastSection = null;
 
   for (const [key, msg] of sorted) {
-    if (key === lastRenderedMessageKey) continue;
+    if (displayMessages.renderedKeys.has(key)) continue;
+    displayMessages.renderedKeys.add(key);
 
     const isSameSender = lastMsg && lastMsg.from === msg.from;
     const isCloseInTime = lastMsg && (msg.timestamp - lastMsg.timestamp < 2 * 60 * 1000);
@@ -261,7 +263,6 @@ async function displayMessages(messagesObj) {
     }
 
     lastMsg = msg;
-    lastRenderedMessageKey = key;
   }
 
   scrollToBottom();
@@ -270,13 +271,14 @@ async function displayMessages(messagesObj) {
 function loadMessages() {
   if (!chatId) return;
   const messagesRef = db.ref(`chats/${chatId}/messages`);
-  messagesRef.off(); // Évite les doublons
+  messagesRef.off();
 
-  messagesRef.on("child_added", async (snap) => {
+  messagesRef.on("child_added", async () => {
     const allMessages = (await db.ref(`chats/${chatId}/messages`).once("value")).val();
     displayMessages(allMessages);
   });
 }
+
 
 async function sendMessage(text) {
   if (!text.trim()) return;
