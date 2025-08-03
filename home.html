@@ -423,6 +423,11 @@ function createFriendCard(uid, name, statusText, userId) {
     const card = document.createElement("div");
     card.className = "friend-card";
     card.id = `friend-${uid}`;
+    card.style.cursor = "pointer"; // Curseur main
+    card.addEventListener("click", async () => {
+        await db.ref(`users/${currentUser.uid}/actual`).set(uid);
+        window.location.href = "chat.html";
+    });
 
     const info = document.createElement("div");
     info.className = "friend-info";
@@ -451,10 +456,8 @@ function createFriendCard(uid, name, statusText, userId) {
 
     // Dot de statut
     const statusDot = document.createElement("span");
-    statusDot.className = "status-dot";
-    statusDot.classList.add("offline"); // par défaut
+    statusDot.className = "status-dot offline";
 
-    // Suivi du statut en direct
     const statusRef = db.ref(`users/${uid}/connectivity`);
     statusRef.on("value", (snapshot) => {
         const value = snapshot.val();
