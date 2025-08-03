@@ -234,6 +234,30 @@ header {
         padding: 24px;
     }
 }
+.profile-wrapper {
+    position: relative;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.status-dot {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    background-color: gray;
+}
+
+.status-dot.online {
+    background-color: #43b581;
+}
+
+.status-dot.offline {
+    background-color: #f04747;
+}
 
 
 
@@ -290,6 +314,12 @@ let currentUser;
 auth.onAuthStateChanged(async (user) => {
     if (!user) return window.location.href = 'index.html';
     currentUser = user;
+
+    // Statut online/offline
+    const statusRef = db.ref(`users/${user.uid}/connectivity`);
+    statusRef.set('online');
+    statusRef.onDisconnect().set('offline');
+
     const snap = await db.ref(`users/${user.uid}`).once('value');
     const data = snap.val();
 
@@ -392,19 +422,22 @@ async function loadFriends() {
 function createFriendCard(uid, name, statusText, userId) {
     const card = document.createElement("div");
     card.className = "friend-card";
+    card.id = `friend-${uid}`;
 
     const info = document.createElement("div");
     info.className = "friend-info";
 
+    const profileWrapper = document.createElement("div");
+    profileWrapper.className = "profile-wrapper";
+
     const profilePic = document.createElement("img");
     profilePic.className = "profile-pic";
     profilePic.src = ""; // temporaire
-
     profilePic.onerror = () => {
         profilePic.src = "defaultpdp.png";
     };
 
-    // Charger l'image de profil depuis Firebase
+    // Charger PDP
     firebase.database().ref("users/" + uid + "/pdp").once("value").then(snapshot => {
         const value = snapshot.val();
         if (value && value.startsWith("pdp:")) {
@@ -415,6 +448,26 @@ function createFriendCard(uid, name, statusText, userId) {
     }).catch(() => {
         profilePic.src = "defaultpdp.png";
     });
+
+    // Dot de statut
+    const statusDot = document.createElement("span");
+    statusDot.className = "status-dot";
+    statusDot.classList.add("offline"); // par défaut
+
+    // Suivi du statut en direct
+    const statusRef = db.ref(`users/${uid}/connectivity`);
+    statusRef.on("value", (snapshot) => {
+        const value = snapshot.val();
+        statusDot.classList.remove("online", "offline");
+        if (value === "online") {
+            statusDot.classList.add("online");
+        } else {
+            statusDot.classList.add("offline");
+        }
+    });
+
+    profileWrapper.appendChild(profilePic);
+    profileWrapper.appendChild(statusDot);
 
     const details = document.createElement("div");
     details.className = "friend-details";
@@ -428,7 +481,7 @@ function createFriendCard(uid, name, statusText, userId) {
     details.appendChild(nameEl);
     details.appendChild(statusEl);
 
-    info.appendChild(profilePic);
+    info.appendChild(profileWrapper);
     info.appendChild(details);
 
     const userIdEl = document.createElement("div");
@@ -447,6 +500,7 @@ async function acceptFriend(friendUid) {
     await db.ref(`friend_requests/${currentUser.uid}/${friendUid}`).remove();
     loadFriends();
 }
+
 
 </script>
 
