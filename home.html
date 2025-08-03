@@ -2,238 +2,202 @@
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Page Principale - Amis</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
     <style>
-/* Reset et bases */
-* {
-  box-sizing: border-box;
-}
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f9fafb;
+            color: #333;
+        }
 
-body {
-  font-family: 'Inter', sans-serif;
-  margin: 0;
-  padding: 0;
-  background: linear-gradient(135deg, #6b73ff 0%, #000dff 100%);
-  color: #f0f0f5;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+        header {
+            display: flex;
+            justify-content: flex-end;
+            padding: 20px;
+            background: #5865f2;
+            color: white;
+            box-shadow: 0 2px 8px rgb(88 101 242 / 0.3);
+        }
 
-/* Header */
-header {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding: 25px 40px;
-  background: rgba(24, 33, 114, 0.9);
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+        .add-friend-btn {
+            background: white;
+            color: #5865f2;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
 
-.add-friend-btn {
-  background: #fff;
-  color: #5865f2;
-  border: none;
-  padding: 14px 28px;
-  border-radius: 12px;
-  font-weight: 700;
-  font-size: 1rem;
-  cursor: pointer;
-  box-shadow: 0 8px 15px rgba(88, 101, 242, 0.4);
-  transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
-  user-select: none;
-}
+        .add-friend-btn:hover {
+            background-color: #4e56d8;
+            color: white;
+        }
 
-.add-friend-btn:hover {
-  background: #5865f2;
-  color: #fff;
-  transform: translateY(-2px);
-  box-shadow: 0 12px 20px rgba(88, 101, 242, 0.7);
-}
+        .friend-list {
+            padding: 20px 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
 
-/* Liste d'amis */
-.friend-list {
-  flex-grow: 1;
-  padding: 30px 40px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  max-width: 700px;
-  margin: 40px auto 60px;
-  overflow-y: auto;
-}
+        .friend-card {
+            width: 100%;
+            padding: 20px 0;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
 
-/* Carte ami */
-.friend-card {
-  background: rgba(255, 255, 255, 0.15);
-  padding: 18px 28px;
-  border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  backdrop-filter: blur(10px);
-  transition: background-color 0.25s ease;
-  cursor: default;
-}
+        .friend-card:hover {
+            background-color: #f0f4ff;
+        }
 
-.friend-card:hover {
-  background: rgba(88, 101, 242, 0.3);
-  box-shadow: 0 12px 32px rgba(88, 101, 242, 0.5);
-}
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
 
-/* Texte ami */
-.friend-card > div:first-child {
-  display: flex;
-  flex-direction: column;
-}
+        .profile-pic {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            background: #ddd;
+        }
 
-.friend-card strong {
-  font-size: 1.2rem;
-  color: #fff;
-  letter-spacing: 0.02em;
-  margin-bottom: 4px;
-  text-shadow: 0 0 4px rgba(88, 101, 242, 0.9);
-}
+        .friend-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow: hidden;
+        }
 
-.friend-card span {
-  font-size: 0.9rem;
-  color: #d0d0e0;
-  font-weight: 500;
-}
+        .friend-details strong {
+            font-weight: 700;
+            font-size: 1.15rem;
+            color: #1a202c;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
 
-/* ID ami */
-.friend-card > div:last-child {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #b0b0d0;
-  user-select: text;
-  font-family: 'Courier New', Courier, monospace;
-}
+        .friend-details span {
+            font-size: 0.9rem;
+            color: #718096;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
 
-/* Bouton dans friend-card (pour accepter) */
-.friend-card button {
-  background: #5865f2;
-  color: white;
-  border: none;
-  padding: 8px 18px;
-  border-radius: 12px;
-  font-weight: 600;
-  font-size: 0.9rem;
-  cursor: pointer;
-  box-shadow: 0 5px 12px rgba(88, 101, 242, 0.5);
-  transition: background-color 0.3s ease;
-  margin-left: 20px;
-}
+        .friend-id {
+            font-size: 0.9rem;
+            color: #4a5568;
+            font-weight: 600;
+            user-select: none;
+            min-width: 120px;
+            text-align: right;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
 
-.friend-card button:hover {
-  background: #3f48cc;
-}
+        .friend-card button {
+            background-color: #5865f2;
+            border: none;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            transition: background-color 0.3s ease;
+            margin-left: 20px;
+            flex-shrink: 0;
+        }
 
-/* Overlay */
-#overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6);
-  display: none;
-  z-index: 999;
-  backdrop-filter: blur(3px);
-}
+        .friend-card button:hover {
+            background-color: #4750d8;
+        }
 
-/* Popup */
-.popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1a1c3a;
-  padding: 30px 35px;
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
-  display: none;
-  flex-direction: column;
-  gap: 20px;
-  z-index: 1000;
-  width: 320px;
-  max-width: 90vw;
-  color: #e0e0ff;
-  font-weight: 600;
-  text-align: center;
-  user-select: none;
-}
+        /* Popup et overlay */
 
-.popup h3 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: #fff;
-  text-shadow: 0 0 6px #5865f2;
-  user-select: text;
-}
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px 35px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgb(0 0 0 / 0.1);
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+            z-index: 999;
+            width: 320px;
+        }
 
-.popup input {
-  padding: 14px 18px;
-  border: none;
-  border-radius: 12px;
-  font-size: 1rem;
-  font-weight: 500;
-  outline: none;
-  background: #2c2f63;
-  color: #f0f0f5;
-  transition: background-color 0.25s ease, box-shadow 0.3s ease;
-  user-select: text;
-}
+        .popup h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.3rem;
+            color: #2d3748;
+            text-align: center;
+        }
 
-.popup input::placeholder {
-  color: #9a9ccf;
-}
+        .popup input {
+            padding: 14px 16px;
+            border: 1.5px solid #cbd5e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
 
-.popup input:focus {
-  background-color: #444880;
-  box-shadow: 0 0 8px 2px #5865f2;
-}
+        .popup input:focus {
+            outline: none;
+            border-color: #5865f2;
+            box-shadow: 0 0 6px #5865f2aa;
+        }
 
-.popup button {
-  background: #5865f2;
-  color: white;
-  border: none;
-  padding: 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 1.1rem;
-  box-shadow: 0 8px 20px rgba(88, 101, 242, 0.7);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  user-select: none;
-}
+        .popup button {
+            background: #5865f2;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
 
-.popup button:hover {
-  background: #3f48cc;
-  transform: translateY(-2px);
-}
+        .popup button:hover {
+            background-color: #4750d8;
+        }
 
-/* Scrollbar custom pour friend-list */
-.friend-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.friend-list::-webkit-scrollbar-thumb {
-  background-color: rgba(88, 101, 242, 0.8);
-  border-radius: 20px;
-}
-
-.friend-list::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.25);
+            display: none;
+            z-index: 998;
+        }
     </style>
 </head>
 
@@ -249,16 +213,16 @@ header {
     <!-- Popup pour ajouter un ami -->
     <div class="popup" id="addFriendPopup">
         <h3>Ajouter un ami</h3>
-        <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami (ex : kyky#1234)">
+        <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami (ex : kyky#1234)" />
         <button onclick="sendFriendRequest()">Demander</button>
     </div>
 
     <!-- Popup pour remplir les infos manquantes -->
     <div class="popup" id="fillInfoPopup">
         <h3>Complète ton profil</h3>
-        <input type="text" id="pseudoInput" placeholder="Ton pseudo">
-        <input type="text" id="stateInput" placeholder="Ton statut (ex : En ligne)">
-        <input type="text" id="idInput" placeholder="Ton identifiant (ex : kyky#1234)">
+        <input type="text" id="pseudoInput" placeholder="Ton pseudo" />
+        <input type="text" id="stateInput" placeholder="Ton statut (ex : En ligne)" />
+        <input type="text" id="idInput" placeholder="Ton identifiant (ex : kyky#1234)" />
         <button onclick="saveUserInfo()">Enregistrer</button>
     </div>
 
@@ -293,7 +257,7 @@ header {
             if (!data || !data.pseudo || !data.state || !data.id) {
                 showPopup('fillInfoPopup');
             } else {
-                loadFriends();
+                loadFriendRequestsAndFriends();
             }
         });
 
@@ -314,80 +278,161 @@ header {
         document.getElementById('overlay').addEventListener('click', hidePopups);
 
         async function sendFriendRequest() {
-            const friendId = document.getElementById('friendIdInput').value;
+            const friendId = document.getElementById('friendIdInput').value.trim();
+            if (!friendId) {
+                alert("Veuillez entrer un identifiant.");
+                return;
+            }
             const usersSnap = await db.ref('users').once('value');
             let found = false;
             usersSnap.forEach(child => {
                 const data = child.val();
                 if (data.id === friendId) {
-                    db.ref(`friend_requests/${child.key}/${currentUser.uid}`).set(true);
-                    alert("Demande envoyée à " + data.pseudo);
+                    if (child.key === currentUser.uid) {
+                        alert("Vous ne pouvez pas vous ajouter vous-même.");
+                        found = true;
+                        return;
+                    }
+                    db.ref(`friend-requests/${child.key}/${currentUser.uid}`).set({
+                        pseudo: "Demande d’ami",
+                        state: "",
+                        id: currentUser.email.split('@')[0] + "#" + Math.floor(Math.random() * 10000)
+                    });
+                    alert("Demande envoyée !");
                     found = true;
                 }
             });
-            if (!found) alert("Identifiant introuvable");
-            hidePopups();
-        }
-
-        async function saveUserInfo() {
-            const pseudo = document.getElementById('pseudoInput').value;
-            const state = document.getElementById('stateInput').value;
-            const id = document.getElementById('idInput').value;
-            await db.ref(`users/${currentUser.uid}`).update({ pseudo, state, id });
-            hidePopups();
-            loadFriends();
-        }
-
-        async function loadFriends() {
-            const list = document.getElementById('friendList');
-            list.innerHTML = '';
-            const friendsSnap = await db.ref(`users/${currentUser.uid}/friends`).once('value');
-            if (!friendsSnap.exists()) return;
-            for (const friendUid of Object.keys(friendsSnap.val())) {
-                const snap = await db.ref(`users/${friendUid}`).once('value');
-                const data = snap.val();
-                if (!data) continue;
-                const div = document.createElement('div');
-                div.className = 'friend-card';
-                div.innerHTML = `
-                    <div>
-                        <strong>${data.pseudo || 'Inconnu'}</strong><br>
-                        <span>${data.state || 'Statut inconnu'}</span>
-                    </div>
-                    <div>${data.id || 'ID manquant'}</div>
-                `;
-                list.appendChild(div);
+            if (!found) {
+                alert("Utilisateur non trouvé.");
+            } else {
+                document.getElementById('friendIdInput').value = '';
+                hidePopups();
             }
         }
 
-        // Affichage des demandes en attente (pour acceptation)
-        auth.onAuthStateChanged(user => {
-            if (!user) return;
-            db.ref(`friend_requests/${user.uid}`).on('value', async snap => {
-                if (!snap.exists()) return;
-                const list = document.getElementById('friendList');
-                for (const senderUid of Object.keys(snap.val())) {
-                    const senderSnap = await db.ref(`users/${senderUid}`).once('value');
-                    const senderData = senderSnap.val();
-                    const div = document.createElement('div');
-                    div.className = 'friend-card';
-                    div.innerHTML = `
-                        <div>
-                            <strong>Demande de ${senderData?.pseudo || 'Inconnu'}</strong><br>
-                            <span>${senderData?.id || ''}</span>
-                        </div>
-                        <button onclick="acceptFriend('${senderUid}')">Accepter</button>
-                    `;
-                    list.appendChild(div);
-                }
-            });
-        });
+        async function saveUserInfo() {
+            const pseudo = document.getElementById('pseudoInput').value.trim();
+            const state = document.getElementById('stateInput').value.trim();
+            const id = document.getElementById('idInput').value.trim();
 
-        async function acceptFriend(friendUid) {
-            await db.ref(`users/${currentUser.uid}/friends/${friendUid}`).set(true);
-            await db.ref(`users/${friendUid}/friends/${currentUser.uid}`).set(true);
-            await db.ref(`friend_requests/${currentUser.uid}/${friendUid}`).remove();
-            loadFriends();
+            if (!pseudo || !state || !id) {
+                alert("Merci de remplir tous les champs.");
+                return;
+            }
+
+            await db.ref(`users/${currentUser.uid}`).update({ pseudo, state, id });
+            hidePopups();
+            loadFriendRequestsAndFriends();
+        }
+
+        async function loadFriendRequestsAndFriends() {
+            const friendListContainer = document.getElementById('friendList');
+            friendListContainer.innerHTML = '';
+
+            // Chargement des demandes d'amis
+            const requestsSnap = await db.ref(`friend-requests/${currentUser.uid}`).once('value');
+            const requests = requestsSnap.val() || {};
+
+            if (Object.keys(requests).length > 0) {
+                const requestTitle = document.createElement('h2');
+                requestTitle.textContent = 'Demandes d’amis';
+                requestTitle.style.marginBottom = '12px';
+                friendListContainer.appendChild(requestTitle);
+            }
+
+            for (const requesterUID in requests) {
+                if (!requests.hasOwnProperty(requesterUID)) continue;
+
+                const friendDataSnap = await db.ref(`users/${requesterUID}`).once('value');
+                const friendData = friendDataSnap.val() || {};
+
+                const profilePicUrl = friendData['profile-pic'] || '';
+                friendListContainer.appendChild(createFriendCard(requesterUID, friendData, 'request', profilePicUrl));
+            }
+
+            // Chargement des amis validés
+            const friendsSnap = await db.ref(`friends/${currentUser.uid}`).once('value');
+            const friends = friendsSnap.val() || {};
+
+            if (Object.keys(friends).length > 0) {
+                const friendTitle = document.createElement('h2');
+                friendTitle.textContent = 'Amis';
+                friendTitle.style.margin = '24px 0 12px 0';
+                friendListContainer.appendChild(friendTitle);
+            }
+
+            for (const friendUID in friends) {
+                if (!friends.hasOwnProperty(friendUID)) continue;
+
+                const friendDataSnap = await db.ref(`users/${friendUID}`).once('value');
+                const friendData = friendDataSnap.val() || {};
+
+                const profilePicUrl = friendData['profile-pic'] || '';
+                friendListContainer.appendChild(createFriendCard(friendUID, friendData, 'friend', profilePicUrl));
+            }
+        }
+
+        function createFriendCard(uid, data, type, profilePicUrl) {
+            const card = document.createElement('div');
+            card.classList.add('friend-card');
+
+            // Zone info + photo
+            const infoDiv = document.createElement('div');
+            infoDiv.classList.add('friend-info');
+
+            // Image profil
+            const img = document.createElement('img');
+            img.classList.add('profile-pic');
+            if (profilePicUrl) {
+                img.src = profilePicUrl;
+            } else {
+                img.src = 'defaultpdp.png';
+            }
+            img.onerror = () => img.src = 'defaultpdp.png';
+
+            infoDiv.appendChild(img);
+
+            // Infos texte
+            const detailsDiv = document.createElement('div');
+            detailsDiv.classList.add('friend-details');
+
+            const pseudoElem = document.createElement('strong');
+            pseudoElem.textContent = data.pseudo || 'Anonyme';
+            detailsDiv.appendChild(pseudoElem);
+
+            const stateElem = document.createElement('span');
+            stateElem.textContent = data.state || '';
+            detailsDiv.appendChild(stateElem);
+
+            infoDiv.appendChild(detailsDiv);
+
+            card.appendChild(infoDiv);
+
+            // Identifiant
+            const idSpan = document.createElement('span');
+            idSpan.classList.add('friend-id');
+            idSpan.textContent = data.id || '';
+            card.appendChild(idSpan);
+
+            // Boutons
+            if (type === 'request') {
+                const acceptBtn = document.createElement('button');
+                acceptBtn.textContent = 'Accepter';
+                acceptBtn.onclick = () => acceptFriend(uid);
+                card.appendChild(acceptBtn);
+            }
+
+            return card;
+        }
+
+        async function acceptFriend(uid) {
+            // Ajoute dans friends de chacun
+            await db.ref(`friends/${currentUser.uid}/${uid}`).set(true);
+            await db.ref(`friends/${uid}/${currentUser.uid}`).set(true);
+            // Supprime la demande
+            await db.ref(`friend-requests/${currentUser.uid}/${uid}`).remove();
+            loadFriendRequestsAndFriends();
+            alert("Demande acceptée !");
         }
     </script>
 </body>
