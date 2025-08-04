@@ -3,30 +3,60 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bonjour</title>
+  <title>Bonjour Rebondissant</title>
   <style>
     body {
-      background-color: red; /* Fond rouge */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      background-color: red;
       margin: 0;
+      overflow: hidden;
+      height: 100vh;
     }
 
-    h1 {
-      color: blue; /* Texte bleu */
-      font-size: 4rem;
+    #bonjour {
+      position: absolute;
+      color: blue;
+      font-size: 3rem;
       font-family: sans-serif;
+      user-select: none;
     }
   </style>
 </head>
 <body>
-  <h1 id="bonjour">Bonjour</h1>
+  <div id="bonjour">Bonjour</div>
 
   <script>
-    // Tu peux ajouter du JavaScript ici si nécessaire
-    console.log("Page chargée : Bonjour !");
+    const bonjour = document.getElementById("bonjour");
+
+    let posX = 100;
+    let posY = 100;
+    let velX = 2;
+    let velY = 2;
+
+    function move() {
+      const rect = bonjour.getBoundingClientRect();
+      const maxX = window.innerWidth - rect.width;
+      const maxY = window.innerHeight - rect.height;
+
+      posX += velX;
+      posY += velY;
+
+      // rebond horizontal
+      if (posX <= 0 || posX >= maxX) {
+        velX *= -1;
+      }
+
+      // rebond vertical
+      if (posY <= 0 || posY >= maxY) {
+        velY *= -1;
+      }
+
+      bonjour.style.left = posX + "px";
+      bonjour.style.top = posY + "px";
+
+      requestAnimationFrame(move);
+    }
+
+    move();
   </script>
 </body>
 </html>
