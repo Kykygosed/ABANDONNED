@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Bonjour Vitesse + / -</title>
+  <title>DVD Vitesse + / -</title>
   <style>
     body {
       background-color: black;
@@ -11,7 +11,7 @@
       height: 100vh;
     }
 
-    #bonjour {
+    #DVD {
       position: absolute;
       color: blue;
       font-size: 3rem;
@@ -41,17 +41,17 @@
   </style>
 </head>
 <body>
-  <div id="bonjour">Bonjour</div>
+  <div id="DVD">DVD</div>
 
   <!-- Contrôles -->
   <div id="sliderContainer">
     <button id="minus">−</button>
-    Vitesse : <input type="range" id="speedSlider" min="1" max="20" value="5" />
+    Vitesse : <input type="range" id="speedSlider" min="1" max="10" value="5" />
     <button id="plus">+</button>
   </div>
 
   <script>
-    const bonjour = document.getElementById("bonjour");
+    const DVD = document.getElementById("bonjour");
     const speedSlider = document.getElementById("speedSlider");
     const plusBtn = document.getElementById("plus");
     const minusBtn = document.getElementById("minus");
@@ -69,7 +69,7 @@
     }
 
     function move() {
-      const rect = bonjour.getBoundingClientRect();
+      const rect = DVD.getBoundingClientRect();
       const maxX = window.innerWidth - rect.width;
       const maxY = window.innerHeight - rect.height;
 
@@ -78,16 +78,16 @@
 
       if (posX <= 0 || posX >= maxX) {
         velX *= -1;
-        bonjour.style.color = couleurAleatoire();
+        DVD.style.color = couleurAleatoire();
       }
 
       if (posY <= 0 || posY >= maxY) {
         velY *= -1;
-        bonjour.style.color = couleurAleatoire();
+        DVD.style.color = couleurAleatoire();
       }
 
-      bonjour.style.left = posX + "px";
-      bonjour.style.top = posY + "px";
+      DVD.style.left = posX + "px";
+      DVD.style.top = posY + "px";
 
       requestAnimationFrame(move);
     }
