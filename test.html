@@ -31,6 +31,13 @@
     let posY = 100;
     let velX = 2;
     let velY = 2;
+// Fonction pour générer une couleur aléatoire
+function couleurAleatoire() {
+  const r = Math.floor(Math.random() * 256);
+  const g = Math.floor(Math.random() * 256);
+  const b = Math.floor(Math.random() * 256);
+  return `rgb(${r}, ${g}, ${b})`;
+}
 
     function move() {
       const rect = bonjour.getBoundingClientRect();
@@ -40,15 +47,16 @@
       posX += velX;
       posY += velY;
 
-      // rebond horizontal
       if (posX <= 0 || posX >= maxX) {
-        velX *= -1;
-      }
+  velX *= -1;
+  bonjour.style.color = couleurAleatoire(); // Change de couleur
+}
 
-      // rebond vertical
-      if (posY <= 0 || posY >= maxY) {
-        velY *= -1;
-      }
+if (posY <= 0 || posY >= maxY) {
+  velY *= -1;
+  bonjour.style.color = couleurAleatoire(); // Change de couleur
+}
+
 
       bonjour.style.left = posX + "px";
       bonjour.style.top = posY + "px";
