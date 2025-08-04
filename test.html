@@ -2,8 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bonjour Rebondissant</title>
+  <title>Bonjour Vitesse</title>
   <style>
     body {
       background-color: red;
@@ -19,25 +18,42 @@
       font-family: sans-serif;
       user-select: none;
     }
+
+    #sliderContainer {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 10px;
+      border-radius: 10px;
+    }
   </style>
 </head>
 <body>
   <div id="bonjour">Bonjour</div>
 
+  <!-- Slider pour vitesse -->
+  <div id="sliderContainer">
+    Vitesse : <input type="range" id="speedSlider" min="1" max="20" value="5" />
+  </div>
+
   <script>
     const bonjour = document.getElementById("bonjour");
+    const speedSlider = document.getElementById("speedSlider");
 
     let posX = 100;
     let posY = 100;
-    let velX = 2;
-    let velY = 2;
-// Fonction pour générer une couleur aléatoire
-function couleurAleatoire() {
-  const r = Math.floor(Math.random() * 256);
-  const g = Math.floor(Math.random() * 256);
-  const b = Math.floor(Math.random() * 256);
-  return `rgb(${r}, ${g}, ${b})`;
-}
+    let velX = 5;
+    let velY = 5;
+
+    // Couleur aléatoire
+    function couleurAleatoire() {
+      const r = Math.floor(Math.random() * 256);
+      const g = Math.floor(Math.random() * 256);
+      const b = Math.floor(Math.random() * 256);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
 
     function move() {
       const rect = bonjour.getBoundingClientRect();
@@ -48,21 +64,27 @@ function couleurAleatoire() {
       posY += velY;
 
       if (posX <= 0 || posX >= maxX) {
-  velX *= -1;
-  bonjour.style.color = couleurAleatoire(); // Change de couleur
-}
+        velX *= -1;
+        bonjour.style.color = couleurAleatoire();
+      }
 
-if (posY <= 0 || posY >= maxY) {
-  velY *= -1;
-  bonjour.style.color = couleurAleatoire(); // Change de couleur
-}
-
+      if (posY <= 0 || posY >= maxY) {
+        velY *= -1;
+        bonjour.style.color = couleurAleatoire();
+      }
 
       bonjour.style.left = posX + "px";
       bonjour.style.top = posY + "px";
 
       requestAnimationFrame(move);
     }
+
+    // Écouteur pour ajuster la vitesse avec le slider
+    speedSlider.addEventListener("input", () => {
+      const speed = parseInt(speedSlider.value, 10);
+      velX = Math.sign(velX) * speed;
+      velY = Math.sign(velY) * speed;
+    });
 
     move();
   </script>
