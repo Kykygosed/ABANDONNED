@@ -1,300 +1,4 @@
-<!DOCTYPE html> 
-<html lang="fr">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Page Principale - Amis</title>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" />
-    <style>
-body {
-    font-family: 'Inter', sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #1f1f1f;
-    color: #e2e2e2;
-}
-
-header {
-    display: flex;
-    justify-content: flex-end;
-    padding: 20px;
-    background: #2c2f36;
-    color: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-}
-
-.add-friend-btn {
-    background: #ffffff;
-    color: #2c2f36;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.add-friend-btn:hover {
-    background-color: #444;
-    color: white;
-}
-
-.friend-list {
-    padding: 20px 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-}
-
-.friend-card {
-    width: 100%;
-    padding: 18px 24px;
-    background: #2c2f36;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border: 1px solid #3c3f46;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-sizing: border-box;
-}
-
-.friend-card:hover {
-    background-color: #363940;
-    transform: translateY(-1px);
-}
-
-.friend-info {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    flex: 1;
-    overflow: hidden;
-}
-
-.profile-pic {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #555;
-    border: 2px solid #444;
-    flex-shrink: 0;
-}
-
-.friend-details {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    overflow: hidden;
-}
-
-.friend-details strong {
-    font-weight: 600;
-    font-size: 1.1rem;
-    color: #f0f0f0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.friend-details span {
-    font-size: 0.88rem;
-    color: #a0a0a0;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.friend-id {
-    font-size: 0.85rem;
-    color: #888;
-    font-weight: 500;
-    user-select: none;
-    min-width: 120px;
-    text-align: right;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.friend-card button {
-    background-color: #3ea76d;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    font-weight: 600;
-    font-size: 14px;
-}
-
-.friend-card button:hover {
-    background-color: #34925d;
-    transform: scale(1.05);
-}
-
-.friend-card button:active {
-    transform: scale(0.97);
-}
-
-/* Popup */
-
-.popup {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: #2c2f36;
-    padding: 30px 35px;
-    border-radius: 16px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    display: none;
-    flex-direction: column;
-    gap: 18px;
-    z-index: 999;
-    width: 320px;
-}
-
-.popup h3 {
-    margin: 0;
-    font-weight: 700;
-    font-size: 1.3rem;
-    color: white;
-    text-align: center;
-}
-
-.popup input {
-    padding: 14px 16px;
-    border: 1.5px solid #444;
-    border-radius: 12px;
-    font-size: 1rem;
-    background: #1f1f1f;
-    color: white;
-    transition: border-color 0.3s ease;
-}
-
-.popup input:focus {
-    outline: none;
-    border-color: #5865f2;
-    box-shadow: 0 0 6px #5865f2aa;
-}
-
-.popup button {
-    background: #5865f2;
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-}
-
-.popup button:hover {
-    background-color: #4750d8;
-}
-
-#overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.35);
-    display: none;
-    z-index: 998;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    .friend-card {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 14px;
-    }
-
-    .friend-id {
-        text-align: left;
-    }
-
-    .friend-card button {
-        width: 100%;
-    }
-
-    .popup {
-        width: 90%;
-        padding: 24px;
-    }
-}
-.profile-wrapper {
-    position: relative;
-    display: inline-block;
-    margin-right: 10px;
-}
-
-.status-dot {
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 2px solid white;
-    background-color: gray;
-}
-
-.status-dot.online {
-    background-color: #43b581;
-}
-
-.status-dot.offline {
-    background-color: #f04747;
-}
-
-
-
-    </style>
-</head>
-
-<body>
-    <header>
-        <button class="add-friend-btn" onclick="openPopup()">+ Ajouter un ami</button>
-    </header>
-
-    <div class="friend-list" id="friendList"></div>
-
-    <div id="overlay"></div>
-
-    <!-- Popup pour ajouter un ami -->
-    <div class="popup" id="addFriendPopup">
-        <h3>Ajouter un ami</h3>
-        <input type="text" id="friendIdInput" placeholder="Identifiant de l'ami (ex : kyky#1234)" />
-        <button onclick="sendFriendRequest()">Demander</button>
-    </div>
-
-    <!-- Popup pour remplir les infos manquantes -->
-    <div class="popup" id="fillInfoPopup">
-        <h3>Complète ton profil</h3>
-        <input type="text" id="pseudoInput" placeholder="Ton pseudo" />
-        <input type="text" id="stateInput" placeholder="Ton statut (ex : En ligne)" />
-        <input type="text" id="idInput" placeholder="Ton identifiant (ex : kyky#1234)" />
-        <button onclick="saveUserInfo()">Enregistrer</button>
-    </div>
-
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-    <script>
+<script>
 const firebaseConfig = {
     apiKey: "AIzaSyDQGmbiwh5LTVq0Wp1q9NrSQzs86vER2XM",
     authDomain: "kychat-45596.firebaseapp.com",
@@ -310,6 +14,7 @@ const auth = firebase.auth();
 const db = firebase.database();
 
 let currentUser;
+const activeChatListeners = new Set();
 
 auth.onAuthStateChanged(async (user) => {
     if (!user) return window.location.href = 'index.html';
@@ -330,6 +35,9 @@ auth.onAuthStateChanged(async (user) => {
     } else {
         loadFriends();
     }
+
+    // Écoute des nouveaux messages dans les chats liés à l'utilisateur
+    listenToUserChats(user.uid);
 });
 
 function openPopup() {
@@ -383,7 +91,6 @@ async function loadFriends() {
     const list = document.getElementById('friendList');
     list.innerHTML = '';
 
-    // Demandes d'amis reçues
     const requestsSnap = await db.ref(`friend_requests/${currentUser.uid}`).once('value');
     const requests = requestsSnap.val() || {};
 
@@ -402,7 +109,6 @@ async function loadFriends() {
         list.appendChild(div);
     }
 
-    // Amis
     const friendsSnap = await db.ref(`users/${currentUser.uid}/friends`).once('value');
     if (!friendsSnap.exists()) return;
 
@@ -425,7 +131,7 @@ function createFriendCard(uid, name, statusText, userId) {
     const card = document.createElement("div");
     card.className = "friend-card";
     card.id = `friend-${uid}`;
-    card.style.cursor = "pointer"; // Curseur main
+    card.style.cursor = "pointer";
     card.addEventListener("click", async () => {
         await db.ref(`users/${currentUser.uid}/actual`).set(uid);
         window.location.href = "chat.html";
@@ -439,12 +145,11 @@ function createFriendCard(uid, name, statusText, userId) {
 
     const profilePic = document.createElement("img");
     profilePic.className = "profile-pic";
-    profilePic.src = ""; // temporaire
+    profilePic.src = "";
     profilePic.onerror = () => {
         profilePic.src = "defaultpdp.png";
     };
 
-    // Charger PDP
     firebase.database().ref("users/" + uid + "/pdp").once("value").then(snapshot => {
         const value = snapshot.val();
         if (value && value.startsWith("pdp:")) {
@@ -456,7 +161,6 @@ function createFriendCard(uid, name, statusText, userId) {
         profilePic.src = "defaultpdp.png";
     });
 
-    // Dot de statut
     const statusDot = document.createElement("span");
     statusDot.className = "status-dot offline";
 
@@ -506,9 +210,72 @@ async function acceptFriend(friendUid) {
     loadFriends();
 }
 
+// Notifications messages privés
+function listenToUserChats(uid) {
+    db.ref('chats').on('child_added', (chatSnap) => {
+        const chatId = chatSnap.key;
+        if (!chatId.includes(uid)) return;
+        if (activeChatListeners.has(chatId)) return;
+        activeChatListeners.add(chatId);
 
+        db.ref(`chats/${chatId}/messages`).limitToLast(1).on('child_added', (msgSnap) => {
+            const data = msgSnap.val();
+            if (!data || data.from === uid) return;
+
+            const from = data.from || "Inconnu";
+            const text = data.text || "(Message vide)";
+            const timestamp = new Date(data.timestamp || Date.now()).toLocaleString();
+            showNotification(from, text, timestamp);
+        });
+    });
+}
+
+function showNotification(from, text, timestamp) {
+    const notif = document.createElement("div");
+    notif.style.background = "#2c2f36";
+    notif.style.color = "white";
+    notif.style.borderRadius = "12px";
+    notif.style.boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)";
+    notif.style.padding = "16px";
+    notif.style.minWidth = "250px";
+    notif.style.maxWidth = "300px";
+    notif.style.fontFamily = "Inter, sans-serif";
+    notif.style.position = "relative";
+    notif.style.overflow = "hidden";
+
+    const bar = document.createElement("div");
+    bar.style.height = "6px";
+    bar.style.background = "#43b581";
+    bar.style.position = "absolute";
+    bar.style.top = "0";
+    bar.style.left = "0";
+    bar.style.width = "100%";
+    bar.style.borderTopLeftRadius = "12px";
+    bar.style.borderTopRightRadius = "12px";
+
+    notif.appendChild(bar);
+
+    const title = document.createElement("div");
+    title.textContent = `Nouveau message de ${from} !`;
+    title.style.fontWeight = "700";
+    title.style.marginBottom = "8px";
+    notif.appendChild(title);
+
+    const body = document.createElement("div");
+    body.textContent = text;
+    body.style.marginBottom = "6px";
+    notif.appendChild(body);
+
+    const time = document.createElement("div");
+    time.textContent = timestamp;
+    time.style.color = "#aaa";
+    time.style.fontSize = "0.85rem";
+    notif.appendChild(time);
+
+    document.getElementById("notifContainer").appendChild(notif);
+
+    setTimeout(() => {
+        notif.remove();
+    }, 6000);
+}
 </script>
-
-</body>
-
-</html>
