@@ -51,7 +51,7 @@
   </div>
 
   <script>
-    const DVD = document.getElementById("bonjour");
+    const DVD = document.getElementById("DVD");
     const speedSlider = document.getElementById("speedSlider");
     const plusBtn = document.getElementById("plus");
     const minusBtn = document.getElementById("minus");
@@ -102,7 +102,7 @@
     // Bouton +
     plusBtn.addEventListener("click", () => {
       let val = parseInt(speedSlider.value, 10);
-      if (val < 20) val++;
+      if (val < 10) val++;
       speedSlider.value = val;
       speedSlider.dispatchEvent(new Event("input"));
     });
