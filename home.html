@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>everfrost</title>
+  <title>Whispr Chat</title>
   <style>
     body {
       margin: 0;
@@ -71,9 +71,72 @@
     #sendBtn:hover img {
       filter: brightness(1.2);
     }
+
+    /* Popup pseudo */
+    #pseudoPopup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    #pseudoPopup .popup-content {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 15px;
+      text-align: center;
+      max-width: 300px;
+      width: 90%;
+      box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+
+    #pseudoPopup h2 {
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+
+    #pseudoPopup input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 15px;
+      background: #2c2c2c;
+      color: white;
+      text-align: center;
+    }
+
+    #pseudoPopup button {
+      background: #4CAF50;
+      color: white;
+      padding: 10px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    #pseudoPopup button:hover {
+      background: #45a049;
+    }
   </style>
 </head>
 <body>
+  <!-- Popup pour le pseudo -->
+  <div id="pseudoPopup" style="display: none;">
+    <div class="popup-content">
+      <h2>Choisis ton pseudo</h2>
+      <input type="text" id="pseudoInput" placeholder="Entrez votre pseudo">
+      <button onclick="savePseudo()">Valider</button>
+    </div>
+  </div>
+
   <div id="messages"></div>
   <div id="inputArea">
     <input type="text" id="message" placeholder="Écrire un message...">
@@ -88,7 +151,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // Config Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyD8rGFTJaR7IL-H8HuyzyLQc8UgGUo2gwY",
       authDomain: "everfrost-9252f.firebaseapp.com",
@@ -104,25 +166,34 @@
     const db = firebase.firestore();
 
     let username = "Utilisateur";
+    let currentUID = null;
 
-    // Vérifier l'utilisateur connecté
     auth.onAuthStateChanged(async (user) => {
       if (user) {
-        // Récupération pseudo depuis Firestore
+        currentUID = user.uid;
         const docRef = db.collection("users").doc(user.uid);
         const docSnap = await docRef.get();
         if (docSnap.exists && docSnap.data().pseudo) {
           username = docSnap.data().pseudo;
+        } else {
+          document.getElementById("pseudoPopup").style.display = "flex";
         }
       } else {
-        // Pas connecté → retour login
         window.location.href = "index.html";
       }
     });
 
+    async function savePseudo() {
+      const pseudo = document.getElementById("pseudoInput").value.trim();
+      if (pseudo && currentUID) {
+        await db.collection("users").doc(currentUID).set({ pseudo: pseudo }, { merge: true });
+        username = pseudo;
+        document.getElementById("pseudoPopup").style.display = "none";
+      }
+    }
+
     const messagesDiv = document.getElementById("messages");
 
-    // Affichage messages en temps réel
     db.collection("messages").orderBy("timestamp")
       .onSnapshot(snapshot => {
         messagesDiv.innerHTML = "";
@@ -136,7 +207,6 @@
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       });
 
-    // Envoyer un message
     function sendMessage() {
       const message = document.getElementById("message").value.trim();
       if (message) {
@@ -149,7 +219,6 @@
       }
     }
 
-    // Envoi avec la touche "Entrée"
     document.getElementById("message").addEventListener("keypress", function(e) {
       if (e.key === "Enter") {
         sendMessage();
