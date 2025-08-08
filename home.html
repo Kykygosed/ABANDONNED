@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Chat Firebase Style ChatGPT</title>
+  <title>everfrost</title>
   <style>
     body {
       margin: 0;
@@ -42,6 +42,7 @@
       padding: 10px;
       gap: 8px;
       box-sizing: border-box;
+      border-top: 1px solid #333;
     }
 
     input {
@@ -82,8 +83,9 @@
   </div>
 
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
   <script>
     // Config Firebase
@@ -97,24 +99,30 @@
       measurementId: "G-BT1S62HC6N"
     };
 
-    // Init
-    const app = firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // UUID temporaire (à remplacer par l'UUID réel de l'utilisateur connecté)
-    const userUUID = "testUUID123";
     let username = "Utilisateur";
 
-    // Récupérer pseudo depuis Firebase
-    db.collection("users").doc(userUUID).get().then(doc => {
-      if (doc.exists && doc.data().pseudo) {
-        username = doc.data().pseudo;
+    // Vérifier l'utilisateur connecté
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // Récupération pseudo depuis Firestore
+        const docRef = db.collection("users").doc(user.uid);
+        const docSnap = await docRef.get();
+        if (docSnap.exists && docSnap.data().pseudo) {
+          username = docSnap.data().pseudo;
+        }
+      } else {
+        // Pas connecté → retour login
+        window.location.href = "index.html";
       }
     });
 
     const messagesDiv = document.getElementById("messages");
 
-    // Afficher messages en temps réel
+    // Affichage messages en temps réel
     db.collection("messages").orderBy("timestamp")
       .onSnapshot(snapshot => {
         messagesDiv.innerHTML = "";
