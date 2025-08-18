@@ -136,6 +136,7 @@
         case "A l’heure": return "green";
         case "RETARD": return "yellow";
         case "ANNULÉ": return "red";
+        case "PARTI": return "red";
         case "EMBARQUEMENT":
         case "FIN D’EMBARQUEMENT": return "orange";
         case "ARRIVÉ": return "green";
@@ -165,6 +166,7 @@
               <option ${data.remarks === "A l’heure" ? "selected" : ""}>A l’heure</option>
               <option ${data.remarks === "RETARD" ? "selected" : ""}>RETARD</option>
               <option ${data.remarks === "ANNULÉ" ? "selected" : ""}>ANNULÉ</option>
+              <option ${data.remarks === "PARTI" ? "selected" : ""}>PARTI</option>
               <option ${data.remarks === "EMBARQUEMENT" ? "selected" : ""}>EMBARQUEMENT</option>
               <option ${data.remarks === "FIN D’EMBARQUEMENT" ? "selected" : ""}>FIN D’EMBARQUEMENT</option>
               <option ${data.remarks === "ARRIVÉ" ? "selected" : ""}>ARRIVÉ</option>
